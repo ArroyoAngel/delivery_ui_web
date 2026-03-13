@@ -11,6 +11,8 @@ interface AuthState {
   logout: () => void;
   isAuthenticated: () => boolean;
   isSuperAdmin: () => boolean;
+  isRestaurantOwner: () => boolean;
+  canManageRestaurant: () => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -21,7 +23,21 @@ export const useAuthStore = create<AuthState>()(
       setAuth: (token, user) => set({ token, user }),
       logout: () => set({ token: null, user: null }),
       isAuthenticated: () => !!get().token,
-      isSuperAdmin: () => (get().user?.roles.includes('super_admin') || get().user?.roles.includes('superadmin')) ?? false,
+      isSuperAdmin: () =>
+        (get().user?.roles.includes('superadmin')) ?? false,
+      isRestaurantOwner: () => {
+        const roles = get().user?.roles ?? [];
+        return (
+          roles.includes('admin') &&
+          !roles.includes('superadmin')
+        );
+      },
+      canManageRestaurant: () => {
+        const roles = get().user?.roles ?? [];
+        return roles.some((r) =>
+          ['admin', 'superadmin'].includes(r),
+        );
+      },
     }),
     { name: 'auth-storage' }
   )

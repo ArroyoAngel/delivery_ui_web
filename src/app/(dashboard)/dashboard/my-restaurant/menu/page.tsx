@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { ArrowLeft, Plus, ToggleLeft, ToggleRight, Package, Check, X } from 'lucide-react';
-import { useRestaurant, useUpdateMenuItemAvailability } from '@/hooks/useRestaurants';
+import { useMyRestaurant, useUpdateMenuItemAvailability } from '@/hooks/useRestaurants';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -15,10 +15,9 @@ import toast from 'react-hot-toast';
 
 type StockEdit = { stock: string; dailyLimit: string };
 
-export default function RestaurantMenuPage() {
-  const params = useParams<{ id: string }>();
+export default function MyRestaurantMenuPage() {
   const router = useRouter();
-  const { data: restaurant, isLoading, refetch } = useRestaurant(params.id);
+  const { data: restaurant, isLoading, refetch } = useMyRestaurant();
   const updateAvailability = useUpdateMenuItemAvailability();
   const [stockEditing, setStockEditing] = useState<Record<string, StockEdit>>({});
   const [stockSaving, setStockSaving] = useState<Record<string, boolean>>({});
@@ -29,7 +28,7 @@ export default function RestaurantMenuPage() {
   async function handleToggleItem(item: MenuItem) {
     try {
       await updateAvailability.mutateAsync({
-        restaurantId: params.id,
+        restaurantId: restaurant!.id,
         itemId: item.id,
         isAvailable: !item.isAvailable,
       });
@@ -62,7 +61,7 @@ export default function RestaurantMenuPage() {
     if (!edit) return;
     setStockSaving((prev) => ({ ...prev, [item.id]: true }));
     try {
-      await api.patch(`/api/restaurants/${params.id}/menu/${item.id}`, {
+      await api.patch(`/api/restaurants/${restaurant!.id}/menu/${item.id}`, {
         stock: edit.stock === '' ? null : Number(edit.stock),
         dailyLimit: edit.dailyLimit === '' ? null : Number(edit.dailyLimit),
       });
@@ -93,7 +92,7 @@ export default function RestaurantMenuPage() {
         <Button
           variant="primary"
           size="sm"
-          onClick={() => router.push(`/dashboard/restaurants/${params.id}/menu/new`)}
+          onClick={() => router.push('/dashboard/my-restaurant/menu/new')}
         >
           <Plus size={14} />
           Agregar item

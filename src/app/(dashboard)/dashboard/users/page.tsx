@@ -11,10 +11,10 @@ import type { User, UserRole } from '@/models';
 import toast from 'react-hot-toast';
 
 const ALL_ROLES: { value: UserRole; label: string }[] = [
-  { value: 'client', label: 'Cliente' },
-  { value: 'restaurant_owner', label: 'Restaurante' },
-  { value: 'rider', label: 'Repartidor' },
-  { value: 'super_admin', label: 'Super Admin' },
+  { value: 'client',     label: 'Cliente'     },
+  { value: 'admin',      label: 'Admin'       },
+  { value: 'rider',      label: 'Repartidor'  },
+  { value: 'superadmin', label: 'Super Admin' },
 ];
 
 export default function UsersPage() {
@@ -103,7 +103,7 @@ export default function UsersPage() {
   return (
     <div className="space-y-5">
       <p className="text-sm text-gray-500">
-        Gestiona permisos y roles de administradores, repartidores y propietarios.
+        Gestiona permisos y roles de administradores, repartidores y clientes.
       </p>
 
       <DataTable

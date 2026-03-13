@@ -59,17 +59,17 @@ export const DELIVERY_TYPE_LABELS: Record<DeliveryType, string> = {
 };
 
 export const ROLE_LABELS: Record<UserRole, string> = {
-  client: 'Cliente',
-  restaurant_owner: 'Restaurante',
-  rider: 'Repartidor',
-  super_admin: 'Super Admin',
+  client:     'Cliente',
+  admin:      'Admin',
+  rider:      'Repartidor',
+  superadmin: 'Super Admin',
 };
 
 export const ROLE_COLORS: Record<UserRole, string> = {
-  client: 'bg-gray-100 text-gray-700',
-  restaurant_owner: 'bg-blue-100 text-blue-700',
-  rider: 'bg-green-100 text-green-700',
-  super_admin: 'bg-red-100 text-red-700',
+  client:     'bg-gray-100 text-gray-700',
+  admin:      'bg-blue-100 text-blue-700',
+  rider:      'bg-green-100 text-green-700',
+  superadmin: 'bg-red-100 text-red-700',
 };
 
 export const GROUP_STATUS_LABELS: Record<GroupStatus, string> = {

@@ -31,6 +31,7 @@ export default function OrderDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { data: order, isLoading } = useOrder(params.id);
+  console.log(order);
   const updateStatus = useUpdateOrderStatus();
   const [selectedStatus, setSelectedStatus] = useState<OrderStatus | ''>('');
 
@@ -131,7 +132,7 @@ export default function OrderDetailPage() {
               <p className="text-sm text-gray-700">{order.deliveryAddress || 'No especificada'}</p>
               {order.deliveryLat && (
                 <p className="text-xs text-gray-400 mt-1">
-                  {order.deliveryLat.toFixed(6)}, {order.deliveryLng.toFixed(6)}
+                  {Number(order.deliveryLat).toFixed(6)}, {Number(order.deliveryLng).toFixed(6)}
                 </p>
               )}
             </div>
@@ -150,7 +151,7 @@ export default function OrderDetailPage() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">
-                    {item.menuItem?.name ?? `Item ${item.menuItemId.slice(0, 8)}`}
+                    {item.menuItem?.name ?? `Item ${item.menu_item_id.slice(0, 8)}`}
                   </p>
                   {item.notes && (
                     <p className="text-xs text-gray-400">{item.notes}</p>
@@ -158,10 +159,10 @@ export default function OrderDetailPage() {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-900">
-                    {formatCurrency(Number(item.unitPrice) * item.quantity)}
+                    {formatCurrency(Number(item.unit_price) * item.quantity)}
                   </p>
                   <p className="text-xs text-gray-400">
-                    {item.quantity} × {formatCurrency(Number(item.unitPrice))}
+                    {item.quantity} × {formatCurrency(Number(item.unit_price))}
                   </p>
                 </div>
               </div>

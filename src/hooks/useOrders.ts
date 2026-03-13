@@ -41,8 +41,10 @@ function normalizeRestaurantOrder(raw: unknown): Order {
 
   return {
     id: String(obj.id ?? ''),
-    clientId: String(obj.clientId ?? ''),
-    restaurantId: String(obj.restaurantId ?? ''),
+    clientId: String(obj.clientId ?? obj.client_id ?? ''),
+    clientName: String(obj.clientName ?? ''),
+    restaurantId: String(obj.restaurantId ?? obj.restaurant_id ?? ''),
+    restaurantName: String(obj.restaurantName ?? ''),
     riderId: obj.riderId ? String(obj.riderId) : undefined,
     status: String(obj.status ?? 'pendiente') as OrderStatus,
     deliveryType: String(obj.deliveryType ?? 'delivery') as 'delivery' | 'recogida' | 'express',
@@ -59,13 +61,26 @@ function normalizeRestaurantOrder(raw: unknown): Order {
   };
 }
 
-export function useOrders() {
+export function useOrders(options?: { enabled?: boolean }) {
   return useQuery<Order[]>({
     queryKey: ['orders'],
     queryFn: async () => {
       const { data } = await api.get('/api/orders/restaurant/mine');
       return normalizeOrdersResponse(data);
     },
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useAdminOrders(options?: { enabled?: boolean }) {
+  return useQuery<Order[]>({
+    queryKey: ['admin-orders'],
+    queryFn: async () => {
+      const { data } = await api.get('/api/orders/admin/all');
+      return Array.isArray(data) ? data.map(normalizeRestaurantOrder) : [];
+    },
+    staleTime: 30_000,
+    enabled: options?.enabled ?? true,
   });
 }
 

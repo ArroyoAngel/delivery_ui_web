@@ -28,6 +28,16 @@ export function useRestaurant(id: string) {
   });
 }
 
+export function useMyRestaurant() {
+  return useQuery<RestaurantDetail>({
+    queryKey: ['my-restaurant'],
+    queryFn: async () => {
+      const { data } = await api.get('/api/restaurants/mine');
+      return data;
+    },
+  });
+}
+
 export function useRestaurantCategories() {
   return useQuery<RestaurantCategory[]>({
     queryKey: ['restaurant-categories'],
@@ -70,6 +80,118 @@ export function useUpdateMenuItemAvailability() {
     },
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ['restaurants', variables.restaurantId] });
+    },
+  });
+}
+
+export function useCreateMenuCategory() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ restaurantId, name }: { restaurantId: string; name: string }) => {
+      const { data } = await api.post(`/api/restaurants/${restaurantId}/menu/categories`, { name });
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['restaurants', variables.restaurantId] });
+      qc.invalidateQueries({ queryKey: ['my-restaurant'] });
+    },
+  });
+}
+
+export function useRestaurantStaff(restaurantId: string) {
+  return useQuery({
+    queryKey: ['restaurant-staff', restaurantId],
+    queryFn: async () => {
+      const { data } = await api.get(`/api/restaurants/${restaurantId}/staff`);
+      return data as import('@/models').RestaurantStaff[];
+    },
+    enabled: !!restaurantId,
+  });
+}
+
+export function useCreateStaff() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      restaurantId,
+      ...body
+    }: {
+      restaurantId: string;
+      email: string;
+      password: string;
+      firstName: string;
+      lastName: string;
+      phone?: string;
+      roleName: string;
+      permissions: string[];
+    }) => {
+      const { data } = await api.post(`/api/restaurants/${restaurantId}/staff`, body);
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['restaurant-staff', variables.restaurantId] });
+    },
+  });
+}
+
+export function useUpdateStaffPermissions() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      restaurantId,
+      staffId,
+      permissions,
+    }: {
+      restaurantId: string;
+      staffId: string;
+      permissions: string[];
+    }) => {
+      const { data } = await api.patch(`/api/restaurants/${restaurantId}/staff/${staffId}`, { permissions });
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['restaurant-staff', variables.restaurantId] });
+    },
+  });
+}
+
+export function useRemoveStaff() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ restaurantId, staffId }: { restaurantId: string; staffId: string }) => {
+      const { data } = await api.delete(`/api/restaurants/${restaurantId}/staff/${staffId}`);
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['restaurant-staff', variables.restaurantId] });
+    },
+  });
+}
+
+export function useCreateMenuItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      restaurantId,
+      ...body
+    }: {
+      restaurantId: string;
+      categoryId: string;
+      name: string;
+      description?: string;
+      price: number;
+      imageUrl?: string;
+      isAvailable?: boolean;
+      stock?: number | null;
+      dailyLimit?: number | null;
+      size?: number;
+    }) => {
+      const { data } = await api.post(`/api/restaurants/${restaurantId}/menu`, body);
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['restaurants', variables.restaurantId] });
+      qc.invalidateQueries({ queryKey: ['my-restaurant'] });
     },
   });
 }

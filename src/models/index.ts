@@ -1,5 +1,9 @@
 // ─── User ────────────────────────────────────────────────────────────────────
-export type UserRole = 'client' | 'restaurant_owner' | 'rider' | 'super_admin';
+export type UserRole =
+  | 'client'
+  | 'rider'
+  | 'superadmin'
+  | 'admin';
 
 export interface User {
   id: string;
@@ -48,6 +52,8 @@ export interface Restaurant {
   deliveryFee: number;
   minimumOrder: number;
   isOpen: boolean;
+  openingTime?: string | null;
+  closingTime?: string | null;
   createdAt: string;
 }
 
@@ -69,6 +75,9 @@ export interface MenuItem {
   imageUrl: string;
   isAvailable: boolean;
   preparationTimeMin: number;
+  stock?: number | null;
+  dailyLimit?: number | null;
+  dailySold?: number;
   createdAt: string;
 }
 
@@ -90,18 +99,24 @@ export type DeliveryType = 'delivery' | 'recogida' | 'express';
 
 export interface OrderItem {
   id: string;
-  menuItemId: string;
+  order_id: string;
+  menu_item_id: string;
+  item_name: string;
   menuItem?: MenuItem;
   quantity: number;
-  unitPrice: number;
+  unit_price: number;
   notes?: string;
+  description: string;
+  image_url?: string;
 }
 
 export interface Order {
   id: string;
   clientId: string;
+  clientName?: string;
   client?: User;
   restaurantId: string;
+  restaurantName?: string;
   restaurant?: Restaurant;
   riderId?: string;
   rider?: User;
@@ -164,4 +179,46 @@ export interface DashboardStats {
   totalRestaurants: number;
   ordersByStatus: { status: string; count: number }[];
   revenueByDay: { date: string; revenue: number }[];
+}
+
+// ─── Restaurant Staff ─────────────────────────────────────────────────────────
+export const STAFF_PERMISSIONS = [
+  'manage_menu',
+  'manage_orders',
+  'view_orders',
+  'manage_schedule',
+  'manage_restaurant',
+  'manage_staff',
+] as const;
+
+export type StaffPermission = (typeof STAFF_PERMISSIONS)[number];
+
+export const STAFF_PERMISSION_LABELS: Record<StaffPermission, string> = {
+  manage_menu:       'Gestionar menú',
+  manage_orders:     'Gestionar órdenes',
+  view_orders:       'Ver órdenes (solo lectura)',
+  manage_schedule:   'Gestionar horarios',
+  manage_restaurant: 'Editar datos del restaurante',
+  manage_staff:      'Gestionar personal',
+};
+
+/** Nombres de cargo que están reservados para roles del sistema */
+export const RESERVED_ROLE_NAMES = [
+  'administrador', 'admin', 'superadmin', 'superadministrador',
+  'super admin', 'super administrador', 'dueño', 'propietario',
+  'owner', 'root',
+] as const;
+
+export interface RestaurantStaff {
+  id: string;
+  accountId: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+  roleName: string;
+  permissions: StaffPermission[];
+  createdAt: string;
+  /** true cuando el superadmin lista el personal e incluye al propietario del restaurante */
+  isOwner?: boolean;
 }

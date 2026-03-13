@@ -11,8 +11,11 @@ import {
   Settings,
   LogOut,
   ChevronRight,
+  UtensilsCrossed,
+  ShieldCheck,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
+import { useFrontendAccess } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -20,22 +23,65 @@ interface NavItem {
   label: string;
   href: string;
   icon: React.ReactNode;
-  adminOnly?: boolean;
+  /** Función personalizada para detectar el estado activo */
+  matchFn?: (pathname: string) => boolean;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={18} /> },
-  { label: 'Pedidos', href: '/dashboard/orders', icon: <ShoppingBag size={18} /> },
-  { label: 'Restaurantes', href: '/dashboard/restaurants', icon: <Store size={18} />, adminOnly: true },
-  { label: 'Usuarios', href: '/dashboard/users', icon: <Users size={18} />, adminOnly: true },
-  { label: 'Repartidores', href: '/dashboard/riders', icon: <Bike size={18} />, adminOnly: true },
-  { label: 'Configuración', href: '/dashboard/config', icon: <Settings size={18} />, adminOnly: true },
+  {
+    label: 'Dashboard',
+    href: '/dashboard',
+    icon: <LayoutDashboard size={18} />,
+  },
+  {
+    label: 'Pedidos',
+    href: '/dashboard/orders',
+    icon: <ShoppingBag size={18} />,
+  },
+  {
+    label: 'Mi Restaurante',
+    href: '/dashboard/my-restaurant',
+    icon: <UtensilsCrossed size={18} />,
+    matchFn: (p) => p.startsWith('/dashboard/my-restaurant'),
+  },
+  {
+    label: 'Mi Personal',
+    href: '/dashboard/staff',
+    icon: <Users size={18} />,
+    matchFn: (p) => p === '/dashboard/staff',
+  },
+  {
+    label: 'Restaurantes',
+    href: '/dashboard/restaurants',
+    icon: <Store size={18} />,
+  },
+  {
+    label: 'Usuarios',
+    href: '/dashboard/users',
+    icon: <Users size={18} />,
+  },
+  {
+    label: 'Repartidores',
+    href: '/dashboard/riders',
+    icon: <Bike size={18} />,
+  },
+  {
+    label: 'Configuración',
+    href: '/dashboard/config',
+    icon: <Settings size={18} />,
+  },
+  {
+    label: 'Roles',
+    href: '/dashboard/roles',
+    icon: <ShieldCheck size={18} />,
+  },
 ];
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, logout, isSuperAdmin } = useAuthStore();
+  const { user, logout } = useAuthStore();
+  const { data: allowedRoutes = [], isLoading: loadingAccess } = useFrontendAccess();
 
   function handleLogout() {
     logout();
@@ -43,10 +89,19 @@ export default function Sidebar() {
     toast.success('Sesión cerrada');
     router.replace('/login');
   }
+  const visibleItems = loadingAccess
+    ? []
+    : NAV_ITEMS.filter((item) => {
+      return allowedRoutes.includes(item.href);
+    });
 
-  const visibleItems = NAV_ITEMS.filter(
-    (item) => !item.adminOnly || isSuperAdmin()
-  );
+  const roleLabel = user?.roles.includes('superadmin')
+    ? 'Super Admin'
+    : user?.roles.includes('admin')
+    ? 'Admin'
+    : user?.roles.includes('rider')
+    ? 'Repartidor'
+    : 'Cliente';
 
   return (
     <aside className="sidebar flex flex-col">
@@ -67,20 +122,21 @@ export default function Sidebar() {
       {/* Nav */}
       <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
         {visibleItems.map((item) => {
-          const isActive =
-            item.href === '/dashboard'
-              ? pathname === '/dashboard'
-              : pathname.startsWith(item.href);
+          const isActive = item.matchFn
+            ? item.matchFn(pathname)
+            : item.href === '/dashboard'
+            ? pathname === '/dashboard'
+            : pathname.startsWith(item.href);
 
           return (
             <Link
               key={item.href}
               href={item.href}
               className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group',
+                'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
                 isActive
                   ? 'text-white'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5',
               )}
               style={isActive ? { backgroundColor: '#f97316' } : {}}
             >
@@ -102,9 +158,7 @@ export default function Sidebar() {
             <p className="text-white text-xs font-medium truncate">
               {user ? `${user.firstName} ${user.lastName}` : '—'}
             </p>
-            <p className="text-gray-500 text-xs truncate">
-              {(user?.roles.includes('super_admin') || user?.roles.includes('superadmin')) ? 'Super Admin' : user?.roles.includes('admin') ? 'Admin' : 'Propietario'}
-            </p>
+            <p className="text-gray-500 text-xs truncate">{roleLabel}</p>
           </div>
         </div>
         <button

@@ -3,12 +3,14 @@
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/useAuthStore';
 import api from '@/lib/api';
 import type { AuthResponse } from '@/models';
 
 export default function LoginPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { setAuth } = useAuthStore();
 
   const [email, setEmail] = useState('');
@@ -16,7 +18,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent) {
-    console.log("asdkajsgdsgd")
     e.preventDefault();
     if (!email || !password) {
       toast.error('Completá todos los campos');
@@ -42,11 +43,11 @@ export default function LoginPage() {
       const user = meRes.data;
 
       setAuth(accessToken, user);
+      queryClient.removeQueries({ queryKey: ['frontend-access'] });
 
-      const isSuperAdmin = user.roles.includes('super_admin') || user.roles.includes('superadmin');
-      const isOwner = user.roles.includes('restaurant_owner') || user.roles.includes('admin');
-      console.log(user.roles);
-      if (!isSuperAdmin && !isOwner) {
+      const isSuperAdmin = user.roles.includes('superadmin');
+      const isAdmin = user.roles.includes('admin');
+      if (!isSuperAdmin && !isAdmin) {
         toast.error('No tenés permisos para acceder al panel.');
         document.cookie = 'auth-token=; path=/; max-age=0';
         useAuthStore.getState().logout();
@@ -135,7 +136,7 @@ export default function LoginPage() {
       </div>
 
       <p className="text-center text-xs text-gray-400 mt-6">
-        Solo para administradores y propietarios de restaurantes
+        Solo para administradores del sistema
       </p>
     </div>
   );
