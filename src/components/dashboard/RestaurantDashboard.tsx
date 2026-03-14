@@ -101,10 +101,10 @@ export default function RestaurantDashboard() {
   for (const order of paidOrders) {
     for (const item of order.items ?? []) {
       const productName = item.menuItem?.name ?? 'Producto';
-      const key = `${item.menuItemId || productName}`;
+      const key = `${item.menuItem?.id || productName}`;
       const current = productMap.get(key) ?? { name: productName, qty: 0, revenue: 0 };
       current.qty += Number(item.quantity ?? 0);
-      current.revenue += Number(item.unitPrice ?? 0) * Number(item.quantity ?? 0);
+      current.revenue += Number(item.unit_price ?? 0) * Number(item.quantity ?? 0);
       productMap.set(key, current);
     }
   }
