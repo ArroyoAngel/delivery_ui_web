@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFrontendAccess } from '@/hooks/useAuth';
+import { useSidebar } from './SidebarContext';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -81,6 +82,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout } = useAuthStore();
+  const { isOpen, close } = useSidebar();
   const { data: allowedRoutes = [], isLoading: loadingAccess } = useFrontendAccess();
 
   function handleLogout() {
@@ -104,7 +106,20 @@ export default function Sidebar() {
     : 'Cliente';
 
   return (
-    <aside className="sidebar flex flex-col">
+    <>
+      {/* Overlay móvil */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          onClick={close}
+        />
+      )}
+    <aside className={cn(
+      'sidebar flex flex-col',
+      'fixed lg:relative z-30',
+      'transition-transform duration-300',
+      isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
+    )}>
       {/* Brand */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
         <div
@@ -132,6 +147,7 @@ export default function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={close}
               className={cn(
                 'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
                 isActive
@@ -170,5 +186,6 @@ export default function Sidebar() {
         </button>
       </div>
     </aside>
+    </>
   );
 }

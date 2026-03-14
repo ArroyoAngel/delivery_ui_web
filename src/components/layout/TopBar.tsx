@@ -1,10 +1,11 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Menu } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/useAuthStore';
 import NotificationBell from './NotificationBell';
+import { useSidebar } from './SidebarContext';
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -34,10 +35,20 @@ export default function TopBar() {
   const { user } = useAuthStore();
 
   const title = getTitle(pathname);
+  const { toggle } = useSidebar();
 
   return (
     <header className="topbar flex items-center justify-between px-6">
-      <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
+      <div className="flex items-center gap-3">
+        <button
+          onClick={toggle}
+          className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all"
+          title="Menú"
+        >
+          <Menu size={20} />
+        </button>
+        <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
+      </div>
 
       <div className="flex items-center gap-2">
         <button
