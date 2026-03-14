@@ -1,9 +1,10 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Bell, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/useAuthStore';
+import NotificationBell from './NotificationBell';
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -47,12 +48,7 @@ export default function TopBar() {
           <RefreshCw size={17} />
         </button>
 
-        <button
-          title="Notificaciones"
-          className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all relative"
-        >
-          <Bell size={17} />
-        </button>
+        <NotificationBell />
 
         <div className="ml-2 flex items-center gap-2.5 pl-3 border-l border-gray-200">
           <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold">
