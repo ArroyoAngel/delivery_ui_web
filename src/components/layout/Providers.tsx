@@ -3,6 +3,12 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 import { useState } from 'react';
+import { useNotifications } from '@/hooks/useNotifications';
+
+function NotificationsInit() {
+  useNotifications();
+  return null;
+}
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -19,6 +25,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <NotificationsInit />
       {children}
       <Toaster
         position="top-right"
