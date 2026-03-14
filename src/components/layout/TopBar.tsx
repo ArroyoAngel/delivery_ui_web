@@ -42,7 +42,7 @@ export default function TopBar() {
       <div className="flex items-center gap-3">
         <button
           onClick={toggle}
-          className="lg:hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all"
+          className="max-[1024px]:flex hidden p-2 rounded-lg text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-all"
           title="Menú"
         >
           <Menu size={20} />

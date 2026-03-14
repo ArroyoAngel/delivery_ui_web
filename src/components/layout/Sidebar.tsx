@@ -107,19 +107,14 @@ export default function Sidebar() {
 
   return (
     <>
-      {/* Overlay móvil */}
+      {/* Overlay para móvil/tablet */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-20 lg:hidden"
+          className="fixed inset-0 bg-black/50 z-40 hidden max-[1024px]:block"
           onClick={close}
         />
       )}
-    <aside className={cn(
-      'sidebar flex flex-col',
-      'fixed lg:relative z-30',
-      'transition-transform duration-300',
-      isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
-    )}>
+      <aside className={cn('sidebar flex flex-col', isOpen && 'open')}>
       {/* Brand */}
       <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
         <div
