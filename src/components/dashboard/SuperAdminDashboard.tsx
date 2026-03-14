@@ -159,7 +159,7 @@ function buildProductStats(
       `Restaurante ${order.restaurantId.slice(0, 8)}`;
 
     for (const item of order.items ?? []) {
-      const key = `${order.restaurantId}:${item.menuItemId || item.menuItem?.name}`;
+      const key = `${order.restaurantId}:${item.menuItem?.id || item.menuItem?.name}`;
       const curr = map.get(key) ?? {
         key,
         name: item.menuItem?.name ?? 'Producto',
@@ -168,7 +168,7 @@ function buildProductStats(
         revenue: 0,
       };
       curr.qty += Number(item.quantity ?? 0);
-      curr.revenue += Number(item.unitPrice ?? 0) * Number(item.quantity ?? 0);
+      curr.revenue += Number(item.unit_price ?? 0) * Number(item.quantity ?? 0);
       map.set(key, curr);
     }
   }

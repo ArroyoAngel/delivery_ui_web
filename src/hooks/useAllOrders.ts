@@ -10,20 +10,26 @@ function normalizeOrder(raw: unknown): Order {
   const items = Array.isArray(obj.items)
     ? obj.items.map((it, idx) => {
         const item = it as Record<string, unknown>;
-        const menuItemId = String(item.menu_item_id ?? item.menuItemId ?? '');
+        const menu_item_id = String(item.menu_item_id ?? item.menuItemId ?? '');
+        const item_name = String(item.item_name ?? item.name ?? 'Producto');
+        const unit_price = Number(item.unit_price ?? item.unitPrice ?? 0);
         return {
           id: String(item.id ?? `${String(obj.id ?? 'order')}-${idx}`),
-          menuItemId,
+          order_id: String(obj.id ?? ''),
+          menu_item_id,
+          item_name,
+          unit_price,
+          description: '',
+          image_url: String(item.image_url ?? item.imageUrl ?? ''),
           quantity: Number(item.quantity ?? 0),
-          unitPrice: Number(item.unit_price ?? item.unitPrice ?? 0),
           notes: typeof item.notes === 'string' ? item.notes : undefined,
           menuItem: {
-            id: menuItemId,
+            id: menu_item_id,
             restaurantId: String(obj.restaurantId ?? obj.restaurant_id ?? ''),
             categoryId: String(item.categoryId ?? item.category_id ?? ''),
-            name: String(item.item_name ?? item.name ?? 'Producto'),
+            name: item_name,
             description: '',
-            price: Number(item.unit_price ?? item.unitPrice ?? 0),
+            price: unit_price,
             imageUrl: String(item.image_url ?? item.imageUrl ?? ''),
             isAvailable: true,
             preparationTimeMin: 0,
