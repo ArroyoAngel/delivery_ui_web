@@ -122,3 +122,31 @@ export function useUpdateOrderStatus() {
     },
   });
 }
+
+export function useMarkPreparing() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.put(`/api/orders/${id}/preparing`);
+      return data;
+    },
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['orders', id] });
+    },
+  });
+}
+
+export function useMarkReady() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.put(`/api/orders/${id}/ready`);
+      return data;
+    },
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['orders', id] });
+    },
+  });
+}

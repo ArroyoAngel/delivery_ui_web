@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Package } from 'lucide-react';
-import { useOrder, useUpdateOrderStatus } from '@/hooks/useOrders';
+import { useOrder, useMarkPreparing, useMarkReady } from '@/hooks/useOrders';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
@@ -31,27 +30,29 @@ export default function OrderDetailPage() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const { data: order, isLoading } = useOrder(params.id);
-  console.log(order);
-  const updateStatus = useUpdateOrderStatus();
-  const [selectedStatus, setSelectedStatus] = useState<OrderStatus | ''>('');
+  const markPreparing = useMarkPreparing();
+  const markReady = useMarkReady();
 
   if (isLoading) return <PageLoader />;
   if (!order) return <p className="text-gray-500 p-8">Pedido no encontrado</p>;
 
-  async function handleStatusUpdate() {
-    if (!selectedStatus) return;
+  async function handlePreparing() {
     try {
-      await updateStatus.mutateAsync({ id: order!.id, status: selectedStatus });
-      toast.success(`Estado actualizado a "${ORDER_STATUS_LABELS[selectedStatus]}"`);
-      setSelectedStatus('');
+      await markPreparing.mutateAsync(order!.id);
+      toast.success('Pedido marcado como "Preparando"');
     } catch {
       toast.error('Error al actualizar estado');
     }
   }
 
-  const availableStatuses = ORDER_STATUS_LABELS
-    ? Object.entries(ORDER_STATUS_LABELS).filter(([s]) => s !== order.status)
-    : [];
+  async function handleReady() {
+    try {
+      await markReady.mutateAsync(order!.id);
+      toast.success('Pedido marcado como "Listo"');
+    } catch {
+      toast.error('Error al actualizar estado');
+    }
+  }
 
   return (
     <div className="space-y-5 max-w-4xl">
@@ -171,45 +172,33 @@ export default function OrderDetailPage() {
         </Card>
       )}
 
-      {/* Status Update */}
-      {order.status !== 'entregado' && order.status !== 'cancelado' && (
+      {/* Status Update — solo las transiciones que le corresponden al admin */}
+      {(order.status === 'confirmado' || order.status === 'preparando') && (
         <Card title="Actualizar estado">
-          <div className="flex gap-3 flex-wrap items-end">
-            <div className="flex-1 min-w-[200px]">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                Nuevo estado
-              </label>
-              <select
-                value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value as OrderStatus)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30"
+          <div className="flex gap-3 flex-wrap items-center">
+            {order.status === 'confirmado' && (
+              <Button
+                variant="primary"
+                onClick={handlePreparing}
+                loading={markPreparing.isPending}
               >
-                <option value="">Seleccionar estado...</option>
-                {availableStatuses.map(([value, label]) => (
-                  <option key={value} value={value}>
-                    {label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <Button
-              variant="primary"
-              onClick={handleStatusUpdate}
-              disabled={!selectedStatus}
-              loading={updateStatus.isPending}
-            >
-              Actualizar
-            </Button>
-            <Button
-              variant="danger"
-              onClick={() => {
-                setSelectedStatus('cancelado');
-                handleStatusUpdate();
-              }}
-              loading={updateStatus.isPending}
-            >
-              Cancelar pedido
-            </Button>
+                Iniciar preparación
+              </Button>
+            )}
+            {order.status === 'preparando' && (
+              <Button
+                variant="primary"
+                onClick={handleReady}
+                loading={markReady.isPending}
+              >
+                Marcar como listo
+              </Button>
+            )}
+            <p className="text-xs text-gray-400">
+              {order.status === 'confirmado'
+                ? 'El pedido pasará a "Preparando"'
+                : 'El pedido quedará disponible para que el rider lo recoja'}
+            </p>
           </div>
         </Card>
       )}
