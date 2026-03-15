@@ -1,41 +1,95 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# YaYa Eats — Dashboard Web (Next.js)
 
-## Getting Started
+Panel de administracion web para restaurantes, riders y pedidos. Corre en el puerto `3000`.
 
-First, run the development server:
+---
+
+## Requisitos
+
+- Node.js 20+
+- API corriendo en `localhost:3002` (para local)
+
+---
+
+## Desarrollo local
+
+### 1. Variables de entorno
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.local.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Valores clave para local (`.env.local`):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3002
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=pk.eyJ1IjoiYXJyb3lvYW5nZWwiLCJhIjoiY21...
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 2. Correr el servidor de desarrollo
 
-## Learn More
+```bash
+cd delivery_ui_web
+npm install
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+El dashboard estara en `http://localhost:3000`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy a QA (yaya.work)
 
-## Deploy on Vercel
+El servidor QA es `85.31.62.55`. El dashboard corre en `/opt/yaya-eats/delivery_ui_web/`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Proceso de deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+# 1. Subir cambios al repositorio
+git add .
+git commit -m "descripcion del cambio"
+git push origin main
 
+# 2. Conectarse al servidor por SSH
+ssh root@85.31.62.55
 
-netstat -ano | grep :3002 | grep LISTENING 2>/dev/null || echo "No process on 3002"
-Stop-Process -Id 29388 -Force
-powershell -Command "Stop-Process -Id 39508 -Force"
+# 3. En el servidor: actualizar y rebuild
+cd /opt/yaya-eats/delivery_ui_web
+git pull origin main
+npm install
+npm run build
+
+# 4. Reiniciar el proceso (si usa PM2)
+pm2 restart delivery_ui_web
+
+# o si usa docker:
+cd /opt/yaya-eats
+docker compose build delivery_ui_web
+docker compose up -d delivery_ui_web
+```
+
+### Variables de entorno en QA
+
+El archivo `.env.local` en el servidor tiene las URLs de produccion:
+
+```env
+NEXT_PUBLIC_API_URL=https://api.yaya.work
+NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=pk.eyJ1IjoiYXJyb3lvYW5nZWwiLCJhIjoiY21...
+```
+
+Para editar:
+
+```bash
+nano /opt/yaya-eats/delivery_ui_web/.env.local
+npm run build
+pm2 restart delivery_ui_web
+```
+
+---
+
+## Estructura de puertos
+
+| Entorno | URL |
+|---------|-----|
+| Local   | `http://localhost:3000` |
+| QA      | `https://yaya.work` |

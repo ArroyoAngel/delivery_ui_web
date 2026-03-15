@@ -18,6 +18,7 @@ interface Notification {
 
 export default function NotificationBell() {
   const [open, setOpen] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const qc = useQueryClient();
 
@@ -61,7 +62,18 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClick);
   }, []);
 
+  useEffect(() => {
+    function handleResize() {
+      setIsSmallScreen(window.innerWidth < 400);
+    }
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const unread = countData?.count ?? 0;
+  const rightAlignClass = isSmallScreen ? 'right-[calc(var(--spacing)*-18)]' : 'right-0';
 
   return (
     <div ref={ref} className="relative">
@@ -79,7 +91,7 @@ export default function NotificationBell() {
       </button>
 
       {open && (
-        <div className="absolute right-0 mt-1 w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden">
+        <div className={`absolute ${rightAlignClass} mt-1 w-80 bg-white border border-gray-200 rounded-xl shadow-lg z-50 overflow-hidden`}>
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
             <span className="text-sm font-semibold text-gray-800">Notificaciones</span>
