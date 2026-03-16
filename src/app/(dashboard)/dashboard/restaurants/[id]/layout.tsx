@@ -2,13 +2,16 @@
 
 import Link from 'next/link';
 import { useParams, usePathname } from 'next/navigation';
-import { LayoutDashboard, UtensilsCrossed, Users } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, Users, Wallet, Landmark, HandCoins } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TABS = [
-  { label: 'Resumen',  suffix: '',       icon: <LayoutDashboard size={14} /> },
-  { label: 'Menú',     suffix: '/menu',  icon: <UtensilsCrossed size={14} /> },
-  { label: 'Personal', suffix: '/staff', icon: <Users size={14} /> },
+  { label: 'Resumen',  suffix: '',                icon: <LayoutDashboard size={14} /> },
+  { label: 'Menú',     suffix: '/menu',            icon: <UtensilsCrossed size={14} /> },
+  { label: 'Personal', suffix: '/staff',           icon: <Users size={14} /> },
+  { label: 'Ingresos', suffix: '/income',          icon: <Wallet size={14} /> },
+  { label: 'Cuentas',  suffix: '/bank-accounts',   icon: <Landmark size={14} /> },
+  { label: 'Retiros',  suffix: '/withdrawals',     icon: <HandCoins size={14} /> },
 ];
 
 export default function RestaurantLayout({ children }: { children: React.ReactNode }) {

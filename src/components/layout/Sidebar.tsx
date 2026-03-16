@@ -13,6 +13,9 @@ import {
   ChevronRight,
   UtensilsCrossed,
   ShieldCheck,
+  Wallet,
+  Landmark,
+  HandCoins,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFrontendAccess } from '@/hooks/useAuth';
@@ -75,6 +78,26 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Roles',
     href: '/dashboard/roles',
     icon: <ShieldCheck size={18} />,
+  },
+  {
+    label: 'Pagos',
+    href: '/dashboard/payments',
+    icon: <Wallet size={18} />,
+  },
+  {
+    label: 'Ingresos',
+    href: '/dashboard/income',
+    icon: <Wallet size={18} />,
+  },
+  {
+    label: 'Cuentas Bancarias',
+    href: '/dashboard/bank-accounts',
+    icon: <Landmark size={18} />,
+  },
+  {
+    label: 'Retiros',
+    href: '/dashboard/withdrawals',
+    icon: <HandCoins size={18} />,
   },
 ];
 
