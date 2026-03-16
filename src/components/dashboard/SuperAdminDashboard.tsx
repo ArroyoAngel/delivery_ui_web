@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -266,15 +266,13 @@ export default function SuperAdminDashboard() {
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [rankingMetric, setRankingMetric] = useState<RankingMetric>('revenue');
-  const [mounted, setMounted] = useState(false);
+  
 
   const { data: allOrders, isLoading: ordersLoading } = useAllOrders();
   const { data: restaurants, isLoading: restLoading } = useRestaurants();
   const { data: users, isLoading: usersLoading } = useUsers();
 
-  useEffect(() => setMounted(true), []);
-
-  if (!mounted || ordersLoading || restLoading || usersLoading) {
+  if (ordersLoading || restLoading || usersLoading) {
     return <PageLoader />;
   }
 

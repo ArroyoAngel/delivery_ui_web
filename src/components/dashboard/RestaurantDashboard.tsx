@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 import {
   BarChart,
@@ -51,10 +51,8 @@ const REVENUE_STATUSES = new Set([
 export default function RestaurantDashboard() {
   const { data: orders, isLoading } = useOrders();
   const [viewMode, setViewMode] = useState<'orders' | 'products'>('orders');
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
 
-  if (isLoading || !mounted) return <PageLoader />;
+  if (isLoading) return <PageLoader />;
 
   const safeOrders = orders ?? [];
 
