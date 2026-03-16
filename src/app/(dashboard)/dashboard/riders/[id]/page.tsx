@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import type { Map as MapboxMap, GeoJSONSource } from 'mapbox-gl';
 import { useRidersList, useRiderLocationDates, useRiderLocationHistory, useRiderDeliveries } from '@/hooks/useConfig';
 import { formatCurrency, formatDate } from '@/lib/utils';
 import { ArrowLeft, Bike, Car, Phone, Mail, MapPin, Package, RefreshCw } from 'lucide-react';
@@ -48,20 +49,6 @@ interface TimelineProps {
   maxSec: number;
   value: number;
   onChange: (s: number) => void;
-}
-
-interface GeoJsonSourceLike {
-  setData: (data: unknown) => void;
-}
-
-interface MapLike {
-  on: (event: string, cb: () => void) => void;
-  addSource: (id: string, source: unknown) => void;
-  addLayer: (layer: unknown) => void;
-  getSource: (id: string) => GeoJsonSourceLike | undefined;
-  fitBounds: (bounds: [[number, number], [number, number]], options: { padding: number; duration: number }) => void;
-  resize: () => void;
-  remove: () => void;
 }
 
 interface PointFeature {
@@ -210,7 +197,7 @@ export default function RiderDetailPage() {
 
   // ── Mapbox ────────────────────────────────────────────────────────────────
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<MapLike | null>(null);
+  const mapRef = useRef<MapboxMap | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
@@ -274,7 +261,7 @@ export default function RiderDetailPage() {
     const map = mapRef.current;
     if (!map || !mapLoaded) return;
 
-    const routeSrc = map.getSource('route');
+    const routeSrc = map.getSource('route') as GeoJSONSource | undefined;
     if (routeSrc) {
       routeSrc.setData({
         type: 'Feature',
@@ -290,7 +277,7 @@ export default function RiderDetailPage() {
         features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: visibleAllCoords[visibleAllCoords.length - 1] }, properties: { type: 'end' } });
       }
     }
-    const ptsSrc = map.getSource('points');
+    const ptsSrc = map.getSource('points') as GeoJSONSource | undefined;
     if (ptsSrc) ptsSrc.setData({ type: 'FeatureCollection', features });
 
     if (visibleAllCoords.length >= 2) {
