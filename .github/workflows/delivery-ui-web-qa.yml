@@ -46,15 +46,16 @@ jobs:
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          printf '%s' "${{ secrets.VPS_SSH_KEY }}" | tr -d '\r' > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keygen -l -f ~/.ssh/id_rsa > /dev/null
+          printf '%s' "${{ secrets.VPS_SSH_KEY }}" | tr -d '\r' > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null
           ssh-keyscan -p "${{ secrets.VPS_PORT }}" "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
 
       - name: Sync source to VPS
         run: |
+          SSH_OPTS="-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -p ${{ secrets.VPS_PORT }}"
           rsync -az --delete \
-            -e "ssh -p ${{ secrets.VPS_PORT }}" \
+            -e "ssh $SSH_OPTS" \
             --exclude ".git" \
             --exclude "node_modules" \
             --exclude ".next" \
@@ -63,7 +64,7 @@ jobs:
 
       - name: Deploy on VPS
         run: |
-          ssh -p "${{ secrets.VPS_PORT }}" "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'
+          ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -p "${{ secrets.VPS_PORT }}" "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'
           set -e
           cd "${{ secrets.UI_WEB_QA_PATH }}"
           ${{ secrets.UI_WEB_QA_DEPLOY_COMMAND }}
