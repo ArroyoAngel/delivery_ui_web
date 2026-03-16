@@ -67,6 +67,20 @@ jobs:
             ./ \
             "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.UI_WEB_QA_PATH }}/"
 
+      - name: Ensure QA env file on VPS
+        run: |
+          SSH_OPTS="-i ~/.ssh/deploy_key -o IdentitiesOnly=yes -p ${{ secrets.VPS_PORT }}"
+          if [ -n "${{ secrets.UI_WEB_QA_ENV_FILE_B64 }}" ]; then
+            printf '%s' "${{ secrets.UI_WEB_QA_ENV_FILE_B64 }}" | base64 --decode | \
+              ssh $SSH_OPTS "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" "cat > '${{ secrets.UI_WEB_QA_PATH }}/.env'"
+            ssh $SSH_OPTS "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" "chmod 600 '${{ secrets.UI_WEB_QA_PATH }}/.env' && cp '${{ secrets.UI_WEB_QA_PATH }}/.env' '${{ secrets.UI_WEB_QA_PATH }}/.env.local' && chmod 600 '${{ secrets.UI_WEB_QA_PATH }}/.env.local'"
+          else
+            ssh $SSH_OPTS "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" "if [ -f '${{ secrets.UI_WEB_QA_PATH }}/.env' ]; then cp '${{ secrets.UI_WEB_QA_PATH }}/.env' '${{ secrets.UI_WEB_QA_PATH }}/.env.local'; elif [ -f '${{ secrets.UI_WEB_QA_PATH }}/.env.local' ]; then cp '${{ secrets.UI_WEB_QA_PATH }}/.env.local' '${{ secrets.UI_WEB_QA_PATH }}/.env'; else exit 1; fi; chmod 600 '${{ secrets.UI_WEB_QA_PATH }}/.env' '${{ secrets.UI_WEB_QA_PATH }}/.env.local'" || {
+              echo "Missing .env/.env.local on VPS and UI_WEB_QA_ENV_FILE_B64 secret is not set."
+              exit 1
+            }
+          fi
+
       - name: Deploy on VPS
         run: |
           ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -p "${{ secrets.VPS_PORT }}" "${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}" << 'EOF'
