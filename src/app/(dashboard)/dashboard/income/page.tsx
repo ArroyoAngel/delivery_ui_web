@@ -15,6 +15,7 @@ const money = new Intl.NumberFormat('es-BO', {
 
 function AdminIncomePage() {
   const { data, isLoading } = useMyIncomeSummary();
+
   if (isLoading) return <PageLoader />;
 
   return (
