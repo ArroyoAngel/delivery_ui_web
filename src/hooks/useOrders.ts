@@ -157,3 +157,63 @@ export function useMarkReady() {
     },
   });
 }
+
+export interface RestaurantServiceArea {
+  id: string;
+  restaurantId: string;
+  name: string;
+  kind: 'mesa' | 'barra' | 'salon' | 'terraza';
+  color: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface CreateLocalCashOrderPayload {
+  serviceType: 'local' | 'recogida';
+  areaId?: string;
+  areaLabel?: string;
+  notes?: string;
+  items: Array<{ menuItemId: string; quantity: number; notes?: string }>;
+}
+
+export function useRestaurantServiceAreas() {
+  return useQuery<RestaurantServiceArea[]>({
+    queryKey: ['restaurant-service-areas'],
+    queryFn: async () => {
+      const { data } = await api.get('/api/orders/restaurant/local/areas');
+      return Array.isArray(data) ? data : [];
+    },
+    staleTime: 30_000,
+  });
+}
+
+export function useCreateRestaurantServiceArea() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (body: { name: string; kind?: 'mesa' | 'barra' | 'salon' | 'terraza'; color?: string }) => {
+      const { data } = await api.post('/api/orders/restaurant/local/areas', body);
+      return data as RestaurantServiceArea;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['restaurant-service-areas'] });
+    },
+  });
+}
+
+export function useCreateLocalCashOrder() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (body: CreateLocalCashOrderPayload) => {
+      const { data } = await api.post('/api/orders/restaurant/local/cash', body);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['admin-orders'] });
+      qc.invalidateQueries({ queryKey: ['restaurant-service-areas'] });
+      qc.invalidateQueries({ queryKey: ['my-restaurant'] });
+    },
+  });
+}

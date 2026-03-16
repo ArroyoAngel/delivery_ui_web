@@ -14,6 +14,12 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard/users': 'Usuarios',
   '/dashboard/riders': 'Repartidores',
   '/dashboard/config': 'Configuración del Sistema',
+  '/dashboard/payments': 'Pagos',
+  '/dashboard/income': 'Ingresos',
+  '/dashboard/bank-accounts': 'Cuentas Bancarias',
+  '/dashboard/withdrawals': 'Retiros',
+  '/dashboard/staff': 'Mi Personal',
+  '/dashboard/my-restaurant/services': 'Servicios del Restaurante',
 };
 
 function getTitle(pathname: string): string {

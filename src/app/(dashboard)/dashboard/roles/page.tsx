@@ -19,6 +19,12 @@ const AVAILABLE_ROUTES: { path: string; label: string }[] = [
   { path: '/dashboard/riders',       label: 'Repartidores'     },
   { path: '/dashboard/config',       label: 'Configuración'    },
   { path: '/dashboard/roles',        label: 'Roles'            },
+  { path: '/dashboard/payments',     label: 'Pagos'            },
+  { path: '/dashboard/bank-accounts',label: 'Cuentas Bancarias'},
+  { path: '/dashboard/withdrawals',  label: 'Retiros'          },
+  { path: '/dashboard/my-restaurant/income', label: 'Mis Ingresos (Restaurante)' },
+  { path: '/dashboard/my-restaurant/bank-accounts', label: 'Mis Cuentas (Restaurante)' },
+  { path: '/dashboard/my-restaurant/withdrawals', label: 'Mis Retiros (Restaurante)' },
 ];
 
 const ROLE_META: { role: string; label: string; color: string }[] = [
