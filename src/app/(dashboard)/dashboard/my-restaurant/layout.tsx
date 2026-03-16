@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, UtensilsCrossed } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const TABS = [
   { label: 'Resumen',  href: '/dashboard/my-restaurant',       icon: <LayoutDashboard size={14} /> },
   { label: 'Menú',     href: '/dashboard/my-restaurant/menu',  icon: <UtensilsCrossed size={14} /> },
+  { label: 'Servicios', href: '/dashboard/my-restaurant/services', icon: <Store size={14} /> },
 ];
 
 export default function MyRestaurantLayout({ children }: { children: React.ReactNode }) {

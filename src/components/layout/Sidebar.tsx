@@ -12,6 +12,7 @@ import {
   LogOut,
   ChevronRight,
   UtensilsCrossed,
+  ReceiptText,
   ShieldCheck,
   Wallet,
   Landmark,
@@ -46,7 +47,13 @@ const NAV_ITEMS: NavItem[] = [
     label: 'Mi Restaurante',
     href: '/dashboard/my-restaurant',
     icon: <UtensilsCrossed size={18} />,
-    matchFn: (p) => p.startsWith('/dashboard/my-restaurant'),
+    matchFn: (p) => p.startsWith('/dashboard/my-restaurant') && !p.startsWith('/dashboard/my-restaurant/services'),
+  },
+  {
+    label: 'Servicios',
+    href: '/dashboard/my-restaurant/services',
+    icon: <ReceiptText size={18} />,
+    matchFn: (p) => p.startsWith('/dashboard/my-restaurant/services'),
   },
   {
     label: 'Mi Personal',
