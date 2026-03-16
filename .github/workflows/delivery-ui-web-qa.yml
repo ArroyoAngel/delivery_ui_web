@@ -46,8 +46,13 @@ jobs:
       - name: Setup SSH key
         run: |
           mkdir -p ~/.ssh
-          printf '%s' "${{ secrets.VPS_SSH_KEY }}" | tr -d '\r' > ~/.ssh/deploy_key
+          if [ -n "${{ secrets.VPS_SSH_KEY_B64 }}" ]; then
+            printf '%s' "${{ secrets.VPS_SSH_KEY_B64 }}" | base64 --decode > ~/.ssh/deploy_key
+          else
+            printf '%s' "${{ secrets.VPS_SSH_KEY }}" | tr -d '\r' > ~/.ssh/deploy_key
+          fi
           chmod 600 ~/.ssh/deploy_key
+          grep -q "BEGIN OPENSSH PRIVATE KEY" ~/.ssh/deploy_key
           ssh-keygen -y -f ~/.ssh/deploy_key > /dev/null
           ssh-keyscan -p "${{ secrets.VPS_PORT }}" "${{ secrets.VPS_HOST }}" >> ~/.ssh/known_hosts
 
