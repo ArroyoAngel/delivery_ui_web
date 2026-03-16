@@ -29,6 +29,12 @@ interface CartLine {
   quantity: number;
 }
 
+function getApiErrorMessage(error: unknown, fallback: string): string {
+  const maybe = error as { response?: { data?: { message?: unknown } } };
+  const msg = maybe?.response?.data?.message;
+  return typeof msg === 'string' ? msg : fallback;
+}
+
 export default function RestaurantServicesPage() {
   const [serviceType, setServiceType] = useState<ServiceType>('local');
   const [selectedAreaId, setSelectedAreaId] = useState<string>('');
@@ -103,8 +109,8 @@ export default function RestaurantServicesPage() {
       setSelectedAreaId(created.id);
       setSelectedAreaLabel(created.name);
       toast.success('Área registrada');
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message ?? 'No se pudo registrar el área');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'No se pudo registrar el área'));
     }
   }
 
@@ -134,8 +140,8 @@ export default function RestaurantServicesPage() {
       setCart([]);
       setNotes('');
       toast.success('Orden registrada y confirmada en efectivo');
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message ?? 'No se pudo registrar la orden');
+    } catch (error: unknown) {
+      toast.error(getApiErrorMessage(error, 'No se pudo registrar la orden'));
     }
   }
 

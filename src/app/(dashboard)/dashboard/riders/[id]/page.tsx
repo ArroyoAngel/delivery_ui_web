@@ -50,6 +50,26 @@ interface TimelineProps {
   onChange: (s: number) => void;
 }
 
+interface GeoJsonSourceLike {
+  setData: (data: unknown) => void;
+}
+
+interface MapLike {
+  on: (event: string, cb: () => void) => void;
+  addSource: (id: string, source: unknown) => void;
+  addLayer: (layer: unknown) => void;
+  getSource: (id: string) => GeoJsonSourceLike | undefined;
+  fitBounds: (bounds: [[number, number], [number, number]], options: { padding: number; duration: number }) => void;
+  resize: () => void;
+  remove: () => void;
+}
+
+interface PointFeature {
+  type: 'Feature';
+  geometry: { type: 'Point'; coordinates: [number, number] };
+  properties: { type: 'start' | 'end' };
+}
+
 function Timeline({ segments, minSec, maxSec, value, onChange }: TimelineProps) {
   const trackRef = useRef<HTMLDivElement>(null);
   const range = maxSec - minSec || 1;
@@ -190,7 +210,7 @@ export default function RiderDetailPage() {
 
   // ── Mapbox ────────────────────────────────────────────────────────────────
   const mapContainerRef = useRef<HTMLDivElement>(null);
-  const mapRef = useRef<any>(null);
+  const mapRef = useRef<MapLike | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
   useEffect(() => {
@@ -263,7 +283,7 @@ export default function RiderDetailPage() {
       });
     }
 
-    const features: any[] = [];
+    const features: PointFeature[] = [];
     if (visibleAllCoords.length > 0) {
       features.push({ type: 'Feature', geometry: { type: 'Point', coordinates: visibleAllCoords[0] }, properties: { type: 'start' } });
       if (visibleAllCoords.length > 1) {

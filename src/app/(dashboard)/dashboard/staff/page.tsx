@@ -140,7 +140,7 @@ function CreateStaffModal({
               placeholder="Cajero, Cocina, Supervisor…"
             />
             <p className="text-xs text-gray-400 mt-1">
-              No se permiten cargos reservados como "Administrador" o "Superadmin".
+              No se permiten cargos reservados como &quot;Administrador&quot; o &quot;Superadmin&quot;.
             </p>
           </div>
 
