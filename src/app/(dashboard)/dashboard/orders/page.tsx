@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, Filter } from 'lucide-react';
 import { useOrders, useAdminOrders } from '@/hooks/useOrders';
@@ -29,14 +29,12 @@ const ALL_STATUSES: { value: OrderStatus | ''; label: string }[] = [
 
 export default function OrdersPage() {
   const router = useRouter();
-  const { isSuperAdmin } = useAuthStore();
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  const user = useAuthStore((s) => s.user);
+  const isAdmin = user?.roles.includes('superadmin') ?? false;
+  const hasUser = !!user;
 
-  const isAdmin = mounted && isSuperAdmin();
-
-  const restaurantOrders = useOrders({ enabled: mounted && !isSuperAdmin() });
-  const adminOrders = useAdminOrders({ enabled: mounted && isSuperAdmin() });
+  const restaurantOrders = useOrders({ enabled: hasUser && !isAdmin });
+  const adminOrders = useAdminOrders({ enabled: hasUser && isAdmin });
 
   const orders = isAdmin ? adminOrders.data : restaurantOrders.data;
   const isLoading = isAdmin ? adminOrders.isLoading : restaurantOrders.isLoading;
