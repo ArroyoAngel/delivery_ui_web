@@ -150,7 +150,7 @@ function NewCouponModalShop({ onClose }: { onClose: () => void }) {
     code: '', description: '', type: 'product_pct' as 'product_pct' | 'product_fixed',
     value: '', minOrderAmount: '', maxUses: '', expiresAt: '',
   });
-  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v as any }));
+  const set = (k: string, v: string) => setForm((f) => ({ ...f, [k]: v as never }));
 
   async function handleSave() {
     if (!form.code || !form.value) { toast.error('Código y valor son obligatorios'); return; }

@@ -53,8 +53,8 @@ function WithdrawalModal({
     try {
       await mutation.mutateAsync({ amount: amt, bankAccountId });
       onClose();
-    } catch (err: any) {
-      setError(err?.response?.data?.message ?? 'Error al solicitar retiro');
+    } catch (err: unknown) {
+      setError((err as { response?: { data?: { message?: string } } })?.response?.data?.message ?? 'Error al solicitar retiro');
     }
   }
 
@@ -83,7 +83,7 @@ function WithdrawalModal({
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Cuenta bancaria</label>
             {bankAccounts.length === 0 ? (
-              <p className="text-sm text-red-500">No tienes cuentas bancarias registradas. Agrégalas en "Cuentas bancarias".</p>
+              <p className="text-sm text-red-500">No tienes cuentas bancarias registradas. Agrégalas en &quot;Cuentas bancarias&quot;.</p>
             ) : (
               <select
                 value={bankAccountId}

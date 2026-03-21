@@ -35,8 +35,8 @@ export function useMyShop() {
       try {
         const { data } = await api.get('/api/shops/mine');
         return data;
-      } catch (err: any) {
-        if (err?.response?.status === 404) return null;
+      } catch (err: unknown) {
+        if ((err as { response?: { status?: number } })?.response?.status === 404) return null;
         throw err;
       }
     },
