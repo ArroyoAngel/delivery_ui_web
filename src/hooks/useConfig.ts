@@ -72,7 +72,7 @@ export interface LocationSegment {
 
 export interface RiderDelivery {
   id: string;
-  restaurantName: string;
+  shopName: string;
   deliveryAddress: string;
   deliveryLat: number;
   deliveryLng: number;

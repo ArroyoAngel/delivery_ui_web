@@ -12,9 +12,9 @@ import toast from 'react-hot-toast';
 const AVAILABLE_ROUTES: { path: string; label: string }[] = [
   { path: '/dashboard',              label: 'Dashboard'        },
   { path: '/dashboard/orders',       label: 'Pedidos'          },
-  { path: '/dashboard/my-restaurant',label: 'Mi Restaurante'   },
+  { path: '/dashboard/my-shop',      label: 'Mi Negocio'       },
   { path: '/dashboard/staff',        label: 'Mi Personal'      },
-  { path: '/dashboard/restaurants',  label: 'Restaurantes'     },
+  { path: '/dashboard/shops',        label: 'Negocios'         },
   { path: '/dashboard/users',        label: 'Usuarios'         },
   { path: '/dashboard/riders',       label: 'Repartidores'     },
   { path: '/dashboard/config',       label: 'Configuración'    },
@@ -22,9 +22,11 @@ const AVAILABLE_ROUTES: { path: string; label: string }[] = [
   { path: '/dashboard/payments',     label: 'Pagos'            },
   { path: '/dashboard/bank-accounts',label: 'Cuentas Bancarias'},
   { path: '/dashboard/withdrawals',  label: 'Retiros'          },
-  { path: '/dashboard/my-restaurant/income', label: 'Mis Ingresos (Restaurante)' },
-  { path: '/dashboard/my-restaurant/bank-accounts', label: 'Mis Cuentas (Restaurante)' },
-  { path: '/dashboard/my-restaurant/withdrawals', label: 'Mis Retiros (Restaurante)' },
+  { path: '/dashboard/profile',      label: 'Mi Perfil'        },
+  { path: '/dashboard/zones',        label: 'Zonas'            },
+  { path: '/dashboard/my-shop/income',        label: 'Mis Ingresos'          },
+  { path: '/dashboard/my-shop/bank-accounts', label: 'Mis Cuentas Bancarias' },
+  { path: '/dashboard/my-shop/withdrawals',   label: 'Mis Retiros'           },
 ];
 
 const ROLE_META: { role: string; label: string; color: string }[] = [

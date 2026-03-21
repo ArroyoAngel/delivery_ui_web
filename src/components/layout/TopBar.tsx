@@ -10,7 +10,7 @@ import { useSidebar } from './SidebarContext';
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
   '/dashboard/orders': 'Pedidos',
-  '/dashboard/restaurants': 'Restaurantes',
+  '/dashboard/shops': 'Negocios',
   '/dashboard/users': 'Usuarios',
   '/dashboard/riders': 'Repartidores',
   '/dashboard/config': 'Configuración del Sistema',
@@ -18,8 +18,14 @@ const PAGE_TITLES: Record<string, string> = {
   '/dashboard/income': 'Ingresos',
   '/dashboard/bank-accounts': 'Cuentas Bancarias',
   '/dashboard/withdrawals': 'Retiros',
+  '/dashboard/zones': 'Zonas de Entrega',
+  '/dashboard/profile': 'Mi Perfil',
   '/dashboard/staff': 'Mi Personal',
-  '/dashboard/my-restaurant/services': 'Servicios del Restaurante',
+  '/dashboard/my-shop': 'Mi Negocio',
+  '/dashboard/my-shop/services': 'Servicios',
+  '/dashboard/my-market': 'Mi Negocio',
+  '/dashboard/my-market/products': 'Productos',
+  '/dashboard/my-market/services': 'Ventas',
 };
 
 function getTitle(pathname: string): string {

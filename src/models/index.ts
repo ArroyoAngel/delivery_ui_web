@@ -28,15 +28,15 @@ export interface AuthResponse {
   user?: User;
 }
 
-// ─── Restaurant ───────────────────────────────────────────────────────────────
-export interface RestaurantCategory {
+// ─── Shop ───────────────────────────────────────────────────────────────────
+export interface ShopCategory {
   id: string;
   name: string;
   icon: string;
   sortOrder: number;
 }
 
-export interface Restaurant {
+export interface Shop {
   id: string;
   ownerId: string;
   name: string;
@@ -45,7 +45,7 @@ export interface Restaurant {
   latitude: number;
   longitude: number;
   categoryId: string;
-  category?: RestaurantCategory;
+  category?: ShopCategory;
   imageUrl: string;
   rating: number;
   deliveryTimeMin: number;
@@ -54,19 +54,20 @@ export interface Restaurant {
   isOpen: boolean;
   openingTime?: string | null;
   closingTime?: string | null;
+  businessType: string;
   createdAt: string;
 }
 
 export interface MenuCategory {
   id: string;
-  restaurantId: string;
+  shopId: string;
   name: string;
   sortOrder: number;
 }
 
 export interface MenuItem {
   id: string;
-  restaurantId: string;
+  shopId: string;
   categoryId: string;
   category?: MenuCategory;
   name: string;
@@ -81,7 +82,7 @@ export interface MenuItem {
   createdAt: string;
 }
 
-export interface RestaurantDetail extends Restaurant {
+export interface ShopDetail extends Shop {
   menuCategories: (MenuCategory & { items: MenuItem[] })[];
 }
 
@@ -115,9 +116,9 @@ export interface Order {
   clientId: string;
   clientName?: string;
   client?: User;
-  restaurantId: string;
-  restaurantName?: string;
-  restaurant?: Restaurant;
+  shopId: string;
+  shopName?: string;
+  shop?: Shop;
   riderId?: string;
   rider?: User;
   status: OrderStatus;
@@ -125,8 +126,11 @@ export interface Order {
   deliveryAddress: string;
   deliveryLat: number;
   deliveryLng: number;
+  subtotal: number;
   total: number;
   deliveryFee: number;
+  platformFee: number;
+  commissionAmount: number;
   notes?: string;
   isExpress?: boolean;
   items?: OrderItem[];
@@ -176,12 +180,12 @@ export interface DashboardStats {
   ordersToday: number;
   revenueToday: number;
   activeRiders: number;
-  totalRestaurants: number;
+  totalShops: number;
   ordersByStatus: { status: string; count: number }[];
   revenueByDay: { date: string; revenue: number }[];
 }
 
-// ─── Restaurant Staff ─────────────────────────────────────────────────────────
+// ─── Shop Staff ─────────────────────────────────────────────────────────────
 export const STAFF_PERMISSIONS = [
   'manage_menu',
   'manage_orders',
@@ -198,7 +202,7 @@ export const STAFF_PERMISSION_LABELS: Record<StaffPermission, string> = {
   manage_orders:     'Gestionar órdenes',
   view_orders:       'Ver órdenes (solo lectura)',
   manage_schedule:   'Gestionar horarios',
-  manage_restaurant: 'Editar datos del restaurante',
+  manage_restaurant: 'Editar datos del negocio',
   manage_staff:      'Gestionar personal',
 };
 
@@ -209,7 +213,7 @@ export const RESERVED_ROLE_NAMES = [
   'owner', 'root',
 ] as const;
 
-export interface RestaurantStaff {
+export interface ShopStaff {
   id: string;
   accountId: string;
   email: string;
@@ -219,6 +223,6 @@ export interface RestaurantStaff {
   roleName: string;
   permissions: StaffPermission[];
   createdAt: string;
-  /** true cuando el superadmin lista el personal e incluye al propietario del restaurante */
+  /** true cuando el superadmin lista el personal e incluye al propietario del negocio */
   isOwner?: boolean;
 }

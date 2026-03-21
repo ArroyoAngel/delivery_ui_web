@@ -11,8 +11,8 @@ interface AuthState {
   logout: () => void;
   isAuthenticated: () => boolean;
   isSuperAdmin: () => boolean;
-  isRestaurantOwner: () => boolean;
-  canManageRestaurant: () => boolean;
+  isShopOwner: () => boolean;
+  canManageShop: () => boolean;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -25,14 +25,14 @@ export const useAuthStore = create<AuthState>()(
       isAuthenticated: () => !!get().token,
       isSuperAdmin: () =>
         (get().user?.roles.includes('superadmin')) ?? false,
-      isRestaurantOwner: () => {
+      isShopOwner: () => {
         const roles = get().user?.roles ?? [];
         return (
           roles.includes('admin') &&
           !roles.includes('superadmin')
         );
       },
-      canManageRestaurant: () => {
+      canManageShop: () => {
         const roles = get().user?.roles ?? [];
         return roles.some((r) =>
           ['admin', 'superadmin'].includes(r),

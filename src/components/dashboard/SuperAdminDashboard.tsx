@@ -25,11 +25,11 @@ import {
 import { StatCard, Card } from '@/components/ui/Card';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import { useAllOrders } from '@/hooks/useAllOrders';
-import { useRestaurants } from '@/hooks/useRestaurants';
+import { useShops } from '@/hooks/useShops';
 import { useUsers } from '@/hooks/useUsers';
 import SalesHeatmap from '@/components/dashboard/SalesHeatmap';
 import { formatCurrency } from '@/lib/utils';
-import type { Order, Restaurant } from '@/models';
+import type { Order, Shop } from '@/models';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -46,8 +46,8 @@ const REVENUE_STATUSES = new Set([
 type DatePreset = 'today' | 'week' | 'month' | 'custom';
 type RankingMetric = 'revenue' | 'orders' | 'ticket';
 
-interface RestaurantStat {
-  restaurantId: string;
+interface ShopStat {
+  shopId: string;
   name: string;
   revenue: number;
   orders: number;
@@ -58,14 +58,14 @@ interface RestaurantStat {
 interface ProductStat {
   key: string;
   name: string;
-  restaurantName: string;
+  shopName: string;
   qty: number;
   revenue: number;
 }
 
 interface SystemAlert {
   type: 'drop' | 'cancellation';
-  restaurantName: string;
+  shopName: string;
   message: string;
 }
 
@@ -119,14 +119,14 @@ function getPrevRange(
   };
 }
 
-function buildRestaurantStats(
+function buildShopStats(
   orders: Order[],
-  restaurantMap: Map<string, Restaurant>,
-): RestaurantStat[] {
+  shopMap: Map<string, Shop>,
+): ShopStat[] {
   const map = new Map<string, { revenue: number; orders: number; cancellations: number }>();
 
   for (const order of orders) {
-    const curr = map.get(order.restaurantId) ?? { revenue: 0, orders: 0, cancellations: 0 };
+    const curr = map.get(order.shopId) ?? { revenue: 0, orders: 0, cancellations: 0 };
     curr.orders += 1;
     if (REVENUE_STATUSES.has(order.status)) {
       curr.revenue += Number(order.total);
@@ -134,12 +134,12 @@ function buildRestaurantStats(
     if (order.status === 'cancelado') {
       curr.cancellations += 1;
     }
-    map.set(order.restaurantId, curr);
+    map.set(order.shopId, curr);
   }
 
   return [...map.entries()].map(([id, stats]) => ({
-    restaurantId: id,
-    name: restaurantMap.get(id)?.name ?? `Restaurante ${id.slice(0, 8)}`,
+    shopId: id,
+    name: shopMap.get(id)?.name ?? `Negocio ${id.slice(0, 8)}`,
     revenue: stats.revenue,
     orders: stats.orders,
     avgTicket: stats.orders > 0 ? stats.revenue / stats.orders : 0,
@@ -149,21 +149,21 @@ function buildRestaurantStats(
 
 function buildProductStats(
   orders: Order[],
-  restaurantMap: Map<string, Restaurant>,
+  shopMap: Map<string, Shop>,
 ): ProductStat[] {
   const map = new Map<string, ProductStat>();
 
   for (const order of orders) {
-    const restName =
-      restaurantMap.get(order.restaurantId)?.name ??
-      `Restaurante ${order.restaurantId.slice(0, 8)}`;
+    const shopName =
+      shopMap.get(order.shopId)?.name ??
+      `Negocio ${order.shopId.slice(0, 8)}`;
 
     for (const item of order.items ?? []) {
-      const key = `${order.restaurantId}:${item.menuItem?.id || item.menuItem?.name}`;
+      const key = `${order.shopId}:${item.menuItem?.id || item.menuItem?.name}`;
       const curr = map.get(key) ?? {
         key,
         name: item.menuItem?.name ?? 'Producto',
-        restaurantName: restName,
+        shopName,
         qty: 0,
         revenue: 0,
       };
@@ -269,18 +269,18 @@ export default function SuperAdminDashboard() {
   
 
   const { data: allOrders, isLoading: ordersLoading } = useAllOrders();
-  const { data: restaurants, isLoading: restLoading } = useRestaurants();
+  const { data: shops, isLoading: shopsLoading } = useShops();
   const { data: users, isLoading: usersLoading } = useUsers();
 
-  if (ordersLoading || restLoading || usersLoading) {
+  if (ordersLoading || shopsLoading || usersLoading) {
     return <PageLoader />;
   }
 
   const safeOrders = allOrders ?? [];
-  const safeRestaurants = restaurants ?? [];
+  const safeShops = shops ?? [];
   const safeUsers = users ?? [];
 
-  const restaurantMap = new Map(safeRestaurants.map((r) => [r.id, r]));
+  const shopMap = new Map(safeShops.map((r) => [r.id, r]));
 
   // ─── Date ranges ───────────────────────────────────────────────────────────
   const { start, end } = getRange(preset, customStart, customEnd);
@@ -306,7 +306,7 @@ export default function SuperAdminDashboard() {
   const totalOrders = filteredOrders.length;
   const prevTotalOrders = prevOrders.length;
 
-  const activeRestaurantIds = new Set(paidOrders.map((o) => o.restaurantId));
+  const activeShopIds = new Set(paidOrders.map((o) => o.shopId));
 
   const avgTicket = paidOrders.length ? totalRevenue / paidOrders.length : 0;
   const prevAvgTicket = prevPaidOrders.length
@@ -316,11 +316,11 @@ export default function SuperAdminDashboard() {
   const clientUsers = safeUsers.filter((u) => u.roles.includes('client'));
   const activeClientIds = new Set(filteredOrders.map((o) => o.clientId));
 
-  // ─── Restaurant stats ──────────────────────────────────────────────────────
-  const restaurantStats = buildRestaurantStats(filteredOrders, restaurantMap);
-  const prevRestaurantStats = buildRestaurantStats(prevOrders, restaurantMap);
+  // ─── Shop stats ──────────────────────────────────────────────────────
+  const shopStats = buildShopStats(filteredOrders, shopMap);
+  const prevShopStats = buildShopStats(prevOrders, shopMap);
 
-  const rankingData = [...restaurantStats]
+  const rankingData = [...shopStats]
     .sort((a, b) => {
       if (rankingMetric === 'revenue') return b.revenue - a.revenue;
       if (rankingMetric === 'orders') return b.orders - a.orders;
@@ -339,8 +339,8 @@ export default function SuperAdminDashboard() {
 
   // ─── Products ──────────────────────────────────────────────────────────────
   const allPaidOrders = safeOrders.filter((o) => REVENUE_STATUSES.has(o.status));
-  const allProductStats = buildProductStats(allPaidOrders, restaurantMap);
-  const periodProductStats = buildProductStats(paidOrders, restaurantMap);
+  const allProductStats = buildProductStats(allPaidOrders, shopMap);
+  const periodProductStats = buildProductStats(paidOrders, shopMap);
 
   const topProducts = periodProductStats.slice(0, 10);
   const forgottenProducts = [...allProductStats]
@@ -353,15 +353,15 @@ export default function SuperAdminDashboard() {
   // ─── Alerts ────────────────────────────────────────────────────────────────
   const alerts: SystemAlert[] = [];
 
-  for (const curr of restaurantStats) {
-    const prev = prevRestaurantStats.find((r) => r.restaurantId === curr.restaurantId);
+  for (const curr of shopStats) {
+    const prev = prevShopStats.find((r) => r.shopId === curr.shopId);
 
     if (prev && prev.revenue > 0) {
       const drop = (prev.revenue - curr.revenue) / prev.revenue;
       if (drop > 0.3) {
         alerts.push({
           type: 'drop',
-          restaurantName: curr.name,
+          shopName: curr.name,
           message: `Caída de ingresos del ${(drop * 100).toFixed(0)}% respecto al período anterior`,
         });
       }
@@ -370,7 +370,7 @@ export default function SuperAdminDashboard() {
     if (curr.orders > 5 && curr.cancellations / curr.orders > 0.2) {
       alerts.push({
         type: 'cancellation',
-        restaurantName: curr.name,
+        shopName: curr.name,
         message: `${((curr.cancellations / curr.orders) * 100).toFixed(0)}% de pedidos cancelados (${curr.cancellations} de ${curr.orders})`,
       });
     }
@@ -389,7 +389,7 @@ export default function SuperAdminDashboard() {
         <div>
           <h1 className="text-xl font-bold text-gray-900">Vista Global del Sistema</h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Métricas agregadas de todos los restaurantes
+            Métricas agregadas de todos los negocios
           </p>
         </div>
 
@@ -445,8 +445,8 @@ export default function SuperAdminDashboard() {
           {...ordGrowth}
         />
         <StatCard
-          label="Restaurantes Activos"
-          value={`${activeRestaurantIds.size} / ${safeRestaurants.length}`}
+          label="Negocios Activos"
+          value={`${activeShopIds.size} / ${safeShops.length}`}
           icon={<Store size={22} />}
         />
         <StatCard
@@ -486,7 +486,7 @@ export default function SuperAdminDashboard() {
                     alert.type === 'drop' ? 'text-red-800' : 'text-amber-800'
                   }`}
                 >
-                  {alert.restaurantName}
+                  {alert.shopName}
                 </p>
                 <p
                   className={`text-xs mt-0.5 ${
@@ -556,9 +556,9 @@ export default function SuperAdminDashboard() {
         </ResponsiveContainer>
       </Card>
 
-      {/* ── Restaurant Ranking ───────────────────────────────────────── */}
+      {/* ── Shop Ranking ───────────────────────────────────────── */}
       <Card
-        title="Ranking de Restaurantes (Top 10)"
+        title="Ranking de Negocios (Top 10)"
         action={
           <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1">
             {RANKING_OPTIONS.map(([m, label]) => (
@@ -633,7 +633,7 @@ export default function SuperAdminDashboard() {
                     Producto
                   </th>
                   <th className="text-left py-2 pr-3 text-xs font-medium text-gray-500">
-                    Restaurante
+                    Negocio
                   </th>
                   <th className="text-right py-2 pr-3 text-xs font-medium text-gray-500">
                     Cant.
@@ -661,7 +661,7 @@ export default function SuperAdminDashboard() {
                         {p.name}
                       </td>
                       <td className="py-2.5 pr-3 text-gray-500 text-xs">
-                        {truncateName(p.restaurantName, 18)}
+                        {truncateName(p.shopName, 18)}
                       </td>
                       <td className="py-2.5 pr-3 text-right font-semibold text-orange-600 text-xs">
                         {p.qty}
@@ -692,7 +692,7 @@ export default function SuperAdminDashboard() {
                     Producto
                   </th>
                   <th className="text-left py-2 pr-3 text-xs font-medium text-gray-500">
-                    Restaurante
+                    Negocio
                   </th>
                   <th className="text-right py-2 text-xs font-medium text-gray-500">
                     Total vendido
@@ -716,7 +716,7 @@ export default function SuperAdminDashboard() {
                         {p.name}
                       </td>
                       <td className="py-2.5 pr-3 text-gray-500 text-xs">
-                        {truncateName(p.restaurantName, 18)}
+                        {truncateName(p.shopName, 18)}
                       </td>
                       <td className="py-2.5 text-right">
                         <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-700">
@@ -732,14 +732,14 @@ export default function SuperAdminDashboard() {
         </Card>
       </div>
 
-      {/* ── Restaurant detail table ──────────────────────────────────── */}
-      <Card title="Detalle por Restaurante">
+      {/* ── Shop detail table ──────────────────────────────────── */}
+      <Card title="Detalle por Negocio">
         <div className="overflow-x-auto -mx-5 px-5">
           <table className="w-full text-sm min-w-[500px]">
             <thead>
               <tr className="border-b border-gray-100">
                 <th className="text-left py-2 pr-4 text-xs font-medium text-gray-500">
-                  Restaurante
+                  Negocio
                 </th>
                 <th className="text-right py-2 pr-4 text-xs font-medium text-gray-500">
                   Pedidos
@@ -756,21 +756,21 @@ export default function SuperAdminDashboard() {
               </tr>
             </thead>
             <tbody>
-              {restaurantStats.length === 0 ? (
+              {shopStats.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="text-center py-8 text-gray-400 text-sm">
                     Sin pedidos en el período
                   </td>
                 </tr>
               ) : (
-                [...restaurantStats]
+                [...shopStats]
                   .sort((a, b) => b.revenue - a.revenue)
                   .map((r) => {
                     const cancelRate =
                       r.orders > 0 ? (r.cancellations / r.orders) * 100 : 0;
                     return (
                       <tr
-                        key={r.restaurantId}
+                        key={r.shopId}
                         className="border-b border-gray-50 hover:bg-gray-50 transition-colors"
                       >
                         <td className="py-2.5 pr-4 font-medium text-gray-900 text-xs">
@@ -811,8 +811,8 @@ export default function SuperAdminDashboard() {
       <Card title="Mapa de Calor de Zonas de Entrega">
         <p className="text-xs text-gray-500 mb-3">
           Concentración de entregas en el período seleccionado.
-          {safeRestaurants.length > 0 && (
-            <> Abarca {activeRestaurantIds.size} restaurante(s) activo(s).</>
+          {safeShops.length > 0 && (
+            <> Abarca {activeShopIds.size} negocio(s) activo(s).</>
           )}
         </p>
         <SalesHeatmap orders={paidOrders} viewMode="orders" />

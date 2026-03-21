@@ -48,7 +48,7 @@ export default function OrdersPage() {
       !search ||
       o.id.toLowerCase().includes(search.toLowerCase()) ||
       (o.deliveryAddress?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
-      (o.restaurantName?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
+      (o.shopName?.toLowerCase().includes(search.toLowerCase()) ?? false) ||
       (o.clientName?.toLowerCase().includes(search.toLowerCase()) ?? false);
     return matchStatus && matchSearch;
   });
@@ -107,10 +107,10 @@ export default function OrdersPage() {
 
   const adminExtraColumns: Column<Order>[] = [
     {
-      key: 'restaurantName' as keyof Order,
-      label: 'Restaurante',
+      key: 'shopName' as keyof Order,
+      label: 'Negocio',
       render: (o) => (
-        <span className="text-gray-700 text-sm font-medium">{o.restaurantName || '—'}</span>
+        <span className="text-gray-700 text-sm font-medium">{o.shopName || '—'}</span>
       ),
     },
     {

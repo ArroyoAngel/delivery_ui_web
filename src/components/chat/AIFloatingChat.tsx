@@ -22,7 +22,7 @@ export default function AIFloatingChat() {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: 'Hola, soy tu asistente IA del panel. Puedo ayudarte con pedidos, restaurantes y métricas.',
+      content: 'Hola, soy tu asistente IA del panel. Puedo ayudarte con pedidos, negocios y métricas.',
     },
   ]);
   const listRef = useRef<HTMLDivElement>(null);

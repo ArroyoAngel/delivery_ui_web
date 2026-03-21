@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useParams } from 'next/navigation';
 import {
   UserPlus,
   Trash2,
@@ -11,10 +12,8 @@ import {
   ChevronUp,
   X,
   Check,
-  Users,
 } from 'lucide-react';
 import {
-  useMyShop,
   useShopStaff,
   useCreateStaff,
   useUpdateStaffPermissions,
@@ -30,7 +29,6 @@ import {
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
-import { formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 // ── Formulario de nuevo staff ─────────────────────────────────────────────────
@@ -182,9 +180,6 @@ function CreateStaffModal({
 
           <div>
             <label className="block text-xs font-medium text-gray-500 mb-2">Permisos</label>
-            <p className="text-xs text-gray-400 mb-2">
-              Solo podés otorgar permisos que vos mismo tenés.
-            </p>
             <div className="space-y-2">
               {STAFF_PERMISSIONS.map((p) => (
                 <label key={p} className="flex items-center gap-2.5 cursor-pointer group">
@@ -376,9 +371,10 @@ function StaffRow({
   );
 }
 
-// ── Contenido de la página ────────────────────────────────────────────────────
+// ── Página ────────────────────────────────────────────────────────────────────
 
-function StaffContent({ shopId }: { shopId: string }) {
+export default function ShopStaffPage() {
+  const { id: shopId } = useParams<{ id: string }>();
   const { data: staff, isLoading } = useShopStaff(shopId);
   const [showCreate, setShowCreate] = useState(false);
 
@@ -389,22 +385,13 @@ function StaffContent({ shopId }: { shopId: string }) {
         <div className="flex-1">
           <h2 className="font-semibold text-gray-900">Personal del negocio</h2>
           <p className="text-xs text-gray-400 mt-0.5">
-            Creá cuentas para tu equipo y asignales permisos específicos.
+            Gestioná el equipo de trabajo y sus permisos dentro del sistema.
           </p>
         </div>
         <Button variant="primary" size="sm" onClick={() => setShowCreate(true)}>
           <UserPlus size={14} />
           Agregar personal
         </Button>
-      </div>
-
-      {/* Info callout */}
-      <div className="bg-orange-50 border border-orange-100 rounded-xl p-4">
-        <p className="text-xs text-orange-700 leading-relaxed">
-          <strong>Jerarquía de permisos:</strong> Solo podés otorgar a tu personal los permisos
-          que vos mismo tenés. Si tu cuenta pierde el rol de administrador, los accesos de todo el
-          personal derivado se revocan automáticamente.
-        </p>
       </div>
 
       {/* Staff list */}
@@ -416,7 +403,7 @@ function StaffContent({ shopId }: { shopId: string }) {
             <ShieldCheck size={32} className="mx-auto mb-3 opacity-30" />
             <p className="text-sm font-medium text-gray-500">Sin personal registrado</p>
             <p className="text-xs mt-1">
-              Agregá miembros de tu equipo para que puedan gestionar el negocio.
+              Agregá miembros del equipo para que puedan gestionar el negocio.
             </p>
             <Button
               variant="primary"
@@ -442,24 +429,4 @@ function StaffContent({ shopId }: { shopId: string }) {
       )}
     </div>
   );
-}
-
-// ── Página principal ──────────────────────────────────────────────────────────
-
-export default function StaffPage() {
-  const { data: restaurant, isLoading, isError } = useMyShop();
-
-  if (isLoading) return <PageLoader />;
-
-  if (isError || !restaurant) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 text-gray-400">
-        <Users size={40} className="mb-4 opacity-30" />
-        <p className="text-sm">No tenés un negocio asignado.</p>
-        <p className="text-xs mt-1">Contactá a un administrador.</p>
-      </div>
-    );
-  }
-
-  return <StaffContent shopId={restaurant.id} />;
 }
