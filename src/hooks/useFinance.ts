@@ -17,6 +17,13 @@ export interface FinanceSummary {
     total_withdrawals: number;
     pending_withdrawals: number;
     pending_withdrawals_amount: string;
+    paid_out_amount: string;
+  };
+  platform: {
+    total_earned: string;
+    commission_earned: string;
+    fee_earned: string;
+    pending_rider_payout: string;
   };
 }
 
