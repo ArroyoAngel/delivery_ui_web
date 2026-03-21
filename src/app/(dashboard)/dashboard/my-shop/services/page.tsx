@@ -46,7 +46,7 @@ export default function ShopServicesPage() {
   const [notes, setNotes] = useState('');
   const [search, setSearch] = useState('');
   const [newAreaName, setNewAreaName] = useState('');
-  const [newAreaKind, setNewAreaKind] = useState('mesa');
+  const [newAreaKind, setNewAreaKind] = useState<'mesa' | 'barra' | 'salon' | 'terraza'>('mesa');
   const [cart, setCart] = useState<CartLine[]>([]);
 
   const { data: restaurant, isLoading: loadingRestaurant } = useMyShop();
@@ -248,7 +248,7 @@ export default function ShopServicesPage() {
                   <div className="flex gap-2">
                     <select
                       value={newAreaKind}
-                      onChange={(e) => setNewAreaKind(e.target.value)}
+                      onChange={(e) => setNewAreaKind(e.target.value as 'mesa' | 'barra' | 'salon' | 'terraza')}
                       className="flex-1 px-3 py-2 text-xs border border-gray-300 rounded-lg"
                     >
                       {areaKindOptions.map((opt) => (
