@@ -1,10 +1,10 @@
 "use client";
 import React, { useState } from 'react';
 import { 
-  Utensils, ShoppingCart, Pill, Store, Phone, Search, 
-  MapPin, Bell, Star, Clock, Home, Zap, Receipt, MessageCircle, 
-  User, Bike, Navigation, DollarSign, CheckCircle2, ChevronRight,
-  Menu, Filter, Layers
+  Utensils, ShoppingCart, Pill, Search,
+  MapPin, Bell, Star, Clock, Home, Zap, Receipt, MessageCircle,
+  User, Bike, Navigation, DollarSign, ChevronRight,
+  Filter, Layers
 } from 'lucide-react';
 
 const App = () => {
@@ -104,6 +104,7 @@ const App = () => {
               ].map((res, i) => (
                 <div key={i} className="group cursor-pointer">
                   <div className="relative h-40 w-full rounded-2xl overflow-hidden mb-2 shadow-sm">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={res.img} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt={res.name} />
                     <div className="absolute top-3 left-3 bg-white/95 backdrop-blur px-2 py-1 rounded-lg text-[9px] font-black text-green-600 border border-green-100">
                       ABIERTO

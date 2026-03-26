@@ -55,6 +55,7 @@ export default function ShopsPage() {
       render: (r) => (
         <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
           {r.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={r.imageUrl} alt={r.name} className="w-full h-full object-cover" />
           ) : storeIcon(r)}
         </div>

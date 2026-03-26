@@ -30,7 +30,6 @@ import {
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
-import { formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 // ── Formulario de nuevo staff ─────────────────────────────────────────────────

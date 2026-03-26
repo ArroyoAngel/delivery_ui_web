@@ -17,14 +17,13 @@ import {
   Pencil,
   Check,
   X,
-  Users,
 } from 'lucide-react';
 import { useShop, useToggleShopOpen } from '@/hooks/useShops';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
-import { formatCurrency, formatDate } from '@/lib/utils';
+import { formatCurrency } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import api from '@/lib/api';
 
@@ -174,6 +173,7 @@ export default function ShopDetailPage() {
           {/* Image */}
           <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
             {restaurant.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img src={restaurant.imageUrl} alt={restaurant.name} className="w-full h-full object-cover" />
             ) : (
               <Package size={28} className="text-gray-300" />
@@ -388,6 +388,7 @@ export default function ShopDetailPage() {
                       className="flex items-center gap-2.5 p-2.5 rounded-lg border border-gray-100"
                     >
                       {item.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={item.imageUrl}
                           alt={item.name}

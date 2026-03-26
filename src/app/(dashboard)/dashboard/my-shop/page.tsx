@@ -183,6 +183,7 @@ export default function MyShopPage() {
           {/* Image */}
           <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
             {restaurant.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
               <img src={restaurant.imageUrl} alt={restaurant.name} className="w-full h-full object-cover" />
             ) : (
               <Package size={28} className="text-gray-300" />
@@ -435,6 +436,7 @@ export default function MyShopPage() {
                       className="flex items-center gap-2.5 p-2.5 rounded-lg border border-gray-100"
                     >
                       {item.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img
                           src={item.imageUrl}
                           alt={item.name}

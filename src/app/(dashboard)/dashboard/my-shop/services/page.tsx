@@ -37,6 +37,7 @@ function QRPaymentModal({
 
         <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-4 bg-gray-50">
           {qrImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={qrImage} alt="QR de pago" className="w-64 h-64 object-contain shadow-sm rounded-lg" />
           ) : (
             <div className="h-64 flex items-center justify-center text-gray-400 text-xs text-center p-10">
@@ -99,6 +100,7 @@ export default function ShopServicesPage() {
   const [showQR, setShowQR] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { setMounted(true); }, []);
 
   const { data: restaurant, isLoading: loadingRestaurant } = useMyShop();

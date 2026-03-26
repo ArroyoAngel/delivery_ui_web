@@ -103,6 +103,7 @@ export default function MyShopMenuPage() {
       <Card>
         <div className="flex gap-4 items-center">
           {restaurant.imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={restaurant.imageUrl} alt={restaurant.name} className="w-16 h-16 rounded-xl object-cover" />
           ) : (
             <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center">
@@ -139,6 +140,7 @@ export default function MyShopMenuPage() {
                       className="flex items-start gap-3 p-3 rounded-lg border border-gray-100 hover:border-gray-200 transition-all"
                     >
                       {item.imageUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element
                         <img src={item.imageUrl} alt={item.name} className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
                       ) : (
                         <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">

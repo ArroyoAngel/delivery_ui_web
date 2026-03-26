@@ -20,14 +20,11 @@ import {
 import { ShoppingBag, DollarSign, Bike, Store } from 'lucide-react';
 import { StatCard, Card } from '@/components/ui/Card';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
-import Badge from '@/components/ui/Badge';
 import { useOrders } from '@/hooks/useOrders';
 import SalesHeatmap from '@/components/dashboard/SalesHeatmap';
 import {
   formatCurrency,
-  formatDate,
   ORDER_STATUS_LABELS,
-  ORDER_STATUS_COLORS,
 } from '@/lib/utils';
 
 const STATUS_CHART_COLORS: Record<string, string> = {

@@ -195,6 +195,7 @@ export default function App() {
               {/* Lado del QR */}
               <div className="flex flex-col items-center justify-center">
                 <div className="bg-white p-2 rounded-xl shadow-[0_0_20px_rgba(255,107,0,0.2)]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={current.qrUrl} alt="QR Code" className="w-16 h-16 sm:w-20 sm:h-20 object-contain" />
                 </div>
                 <div className={`mt-3 text-[8px] sm:text-[9px] font-black text-center uppercase tracking-tighter px-3 py-1.5 rounded-lg w-full ${cardMode === 'restaurant' ? 'bg-[#D4AF37] text-black' : (cardMode === 'driver' ? 'bg-[#2563EB] text-white' : 'bg-[#FF6B00] text-white')}`}>

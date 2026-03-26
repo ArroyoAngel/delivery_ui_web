@@ -5,7 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { Card, StatCard } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import { CheckCircle, Clock, XCircle, Coins, CreditCard } from 'lucide-react';
+import { CheckCircle, Clock, Coins, CreditCard } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const money = new Intl.NumberFormat('es-BO', { style: 'currency', currency: 'BOB' });

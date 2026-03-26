@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { ShieldCheck, Save, RotateCcw } from 'lucide-react';
 import { useRolePermissions, useUpdateRolePermissions } from '@/hooks/useRoles';
-import type { RolePermissions } from '@/hooks/useRoles';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
