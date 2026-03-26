@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Search, ToggleLeft, ToggleRight, UtensilsCrossed, Store } from 'lucide-react';
-import { useShops, useToggleShopOpen } from '@/hooks/useShops';
+import { useShops, useToggleShopOpen, useToggleShopStatus } from '@/hooks/useShops';
 import DataTable, { Column } from '@/components/ui/DataTable';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -16,6 +16,18 @@ export default function ShopsPage() {
   const [search, setSearch] = useState('');
   const { data: restaurants, isLoading } = useShops(search || undefined);
   const toggleOpen = useToggleShopOpen();
+  const toggleStatus = useToggleShopStatus();
+
+  async function handleToggleStatus(e: React.MouseEvent, shop: Shop) {
+    e.stopPropagation();
+    const next = shop.status === 'active' ? 'disabled' : 'active';
+    try {
+      await toggleStatus.mutateAsync({ id: shop.id, status: next });
+      toast.success(`${shop.name} ${next === 'active' ? 'habilitado' : 'deshabilitado'}`);
+    } catch {
+      toast.error('Error al actualizar negocio');
+    }
+  }
 
   async function handleToggle(e: React.MouseEvent, restaurant: Shop) {
     e.stopPropagation();
@@ -80,6 +92,28 @@ export default function ShopsPage() {
       label: 'Tiempo',
       render: (r) => (
         <span className="text-sm text-gray-600">{r.deliveryTimeMin} min</span>
+      ),
+    },
+    {
+      key: 'status',
+      label: 'Membresía',
+      render: (r) => (
+        <button
+          onClick={(e) => handleToggleStatus(e, r)}
+          className="flex items-center gap-1.5 text-sm transition-all"
+        >
+          {r.status === 'active' ? (
+            <>
+              <ToggleRight size={20} className="text-orange-500" />
+              <Badge label="Habilitado" className="bg-orange-100 text-orange-700" />
+            </>
+          ) : (
+            <>
+              <ToggleLeft size={20} className="text-red-400" />
+              <Badge label="Deshabilitado" className="bg-red-100 text-red-600" />
+            </>
+          )}
+        </button>
       ),
     },
     {

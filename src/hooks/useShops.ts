@@ -67,6 +67,19 @@ export function useToggleShopOpen() {
   });
 }
 
+export function useToggleShopStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: 'active' | 'disabled' }) => {
+      const { data } = await api.patch(`/api/shops/${id}`, { status });
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['shops'] });
+    },
+  });
+}
+
 export function useUpdateMenuItemAvailability() {
   const qc = useQueryClient();
   return useMutation({

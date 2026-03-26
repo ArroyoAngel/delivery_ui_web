@@ -9,7 +9,7 @@ import Badge from '@/components/ui/Badge';
 import { GROUP_STATUS_COLORS, GROUP_STATUS_LABELS, formatDate } from '@/lib/utils';
 import type { DeliveryGroup } from '@/models';
 import type { RiderInfo } from '@/hooks/useConfig';
-import { Bike, Car, RefreshCw, MapPin } from 'lucide-react';
+import { Bike, Car, RefreshCw, MapPin, Coins } from 'lucide-react';
 
 const VEHICLE_LABELS: Record<string, string> = {
   moto: 'Moto',
@@ -68,6 +68,19 @@ export default function RidersPage() {
           <div className="flex items-center gap-1.5 text-sm text-gray-700">
             {v === 'auto' ? <Car size={14} /> : <Bike size={14} />}
             <span>{VEHICLE_LABELS[v] ?? v}</span>
+          </div>
+        );
+      },
+    },
+    {
+      key: 'creditBalance',
+      label: 'Créditos',
+      render: (r) => {
+        const bal = r.creditBalance ?? 0;
+        return (
+          <div className={`flex items-center gap-1 text-sm font-medium ${bal === 0 ? 'text-red-500' : bal <= 5 ? 'text-orange-500' : 'text-green-600'}`}>
+            <Coins size={13} />
+            {bal}
           </div>
         );
       },

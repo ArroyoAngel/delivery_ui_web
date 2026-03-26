@@ -17,9 +17,8 @@ import {
   Landmark,
   HandCoins,
   MapPin,
-  UserCircle,
-  HeadphonesIcon,
   Tag,
+  Coins,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFrontendAccess } from '@/hooks/useAuth';
@@ -139,14 +138,9 @@ const NAV_ITEMS: NavItem[] = [
     icon: <Tag size={18} />,
   },
   {
-    label: 'Soporte',
-    href: '/dashboard/support',
-    icon: <HeadphonesIcon size={18} />,
-  },
-  {
-    label: 'Mi Perfil',
-    href: '/dashboard/profile',
-    icon: <UserCircle size={18} />,
+    label: 'Créditos',
+    href: '/dashboard/credits',
+    icon: <Coins size={18} />,
   },
 ];
 
@@ -243,17 +237,35 @@ export default function Sidebar() {
 
       {/* User footer */}
       <div className="border-t border-white/10 p-3">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-lg mb-1">
-          <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-            {user ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() || '??' : '??'}
+        {allowedRoutes.includes('/dashboard/profile') ? (
+          <Link
+            href="/dashboard/profile"
+            onClick={close}
+            className="flex items-center gap-3 px-2 py-2 rounded-lg mb-1 hover:bg-white/5 transition-all"
+          >
+            <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {user ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() || '??' : '??'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-xs font-medium truncate">
+                {user ? `${user.firstName} ${user.lastName}` : '—'}
+              </p>
+              <p className="text-gray-500 text-xs truncate">{roleLabel}</p>
+            </div>
+          </Link>
+        ) : (
+          <div className="flex items-center gap-3 px-2 py-2 rounded-lg mb-1">
+            <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {user ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() || '??' : '??'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-xs font-medium truncate">
+                {user ? `${user.firstName} ${user.lastName}` : '—'}
+              </p>
+              <p className="text-gray-500 text-xs truncate">{roleLabel}</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white text-xs font-medium truncate">
-              {user ? `${user.firstName} ${user.lastName}` : '—'}
-            </p>
-            <p className="text-gray-500 text-xs truncate">{roleLabel}</p>
-          </div>
-        </div>
+        )}
         <button
           onClick={handleLogout}
           className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-400/10 text-sm transition-all"

@@ -52,6 +52,7 @@ export interface Shop {
   deliveryFee: number;
   minimumOrder: number;
   isOpen: boolean;
+  status: 'active' | 'disabled';
   openingTime?: string | null;
   closingTime?: string | null;
   businessType: string;

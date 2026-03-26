@@ -179,16 +179,19 @@ export default function MyShopNewMenuItemPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tamaño (porciones)</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tamaño en bolsa</label>
             <select
               value={form.size}
               onChange={(e) => set('size', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400"
             >
-              <option value="1">1 porción</option>
-              <option value="2">2 porciones</option>
-              <option value="3">3 porciones</option>
+              <option value="1">1 — Pequeño (bebida, postre)</option>
+              <option value="2">2 — Mediano (plato simple)</option>
+              <option value="3">3 — Grande (plato completo)</option>
+              <option value="5">5 — Muy grande (paquete)</option>
+              <option value="10">10 — Ocupa toda la bolsa</option>
             </select>
+            <p className="text-xs text-gray-400 mt-0.5">Límite de bolsa del repartidor: 10 pts</p>
           </div>
         </div>
 

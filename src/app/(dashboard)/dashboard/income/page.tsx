@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Card, StatCard } from '@/components/ui/Card';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import {
@@ -11,6 +12,7 @@ import {
   useRequestWithdrawal,
 } from '@/hooks/useFinance';
 import { useAuthStore } from '@/store/useAuthStore';
+import api from '@/lib/api';
 import {
   ShoppingBag,
   Wallet,
@@ -21,7 +23,26 @@ import {
   TrendingUp,
   Percent,
   Bike,
+  Coins,
+  CheckCircle,
 } from 'lucide-react';
+
+interface CreditPurchase {
+  id: string;
+  amount_paid: number;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'expired';
+}
+
+function useCreditPurchases() {
+  return useQuery<CreditPurchase[]>({
+    queryKey: ['credit-purchases'],
+    queryFn: async () => {
+      const { data } = await api.get('/api/credits/admin/purchases');
+      return Array.isArray(data) ? data : [];
+    },
+    staleTime: 30_000,
+  });
+}
 
 const money = new Intl.NumberFormat('es-BO', {
   style: 'currency',
@@ -246,8 +267,9 @@ function AdminIncomePage() {
 
 function SuperAdminIncomePage() {
   const { data, isLoading } = useFinanceSummary();
+  const { data: purchases = [], isLoading: loadingPurchases } = useCreditPurchases();
 
-  if (isLoading) return <PageLoader />;
+  if (isLoading || loadingPurchases) return <PageLoader />;
 
   const platform = data?.platform;
   const totalEarned      = Number(platform?.total_earned ?? 0);
@@ -256,8 +278,42 @@ function SuperAdminIncomePage() {
   const pendingRider     = Number(platform?.pending_rider_payout ?? 0);
   const paidOut          = Number(data?.withdrawals?.paid_out_amount ?? 0);
 
+  const creditConfirmed = purchases.filter((p) => p.status === 'confirmed');
+  const creditPending   = purchases.filter((p) => p.status === 'pending');
+  const creditRevenue   = creditConfirmed.reduce((sum, p) => sum + Number(p.amount_paid), 0);
+  const creditPendingAmt = creditPending.reduce((sum, p) => sum + Number(p.amount_paid), 0);
+
   return (
     <div className="space-y-6">
+
+      {/* ── Ventas de créditos ── */}
+      <div>
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          Ventas de créditos (riders)
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Ingresos confirmados"
+            value={money.format(creditRevenue)}
+            icon={<Coins size={20} />}
+          />
+          <StatCard
+            label="Compras confirmadas"
+            value={creditConfirmed.length}
+            icon={<CheckCircle size={20} />}
+          />
+          <StatCard
+            label="Monto pendiente"
+            value={money.format(creditPendingAmt)}
+            icon={<Clock3 size={20} />}
+          />
+          <StatCard
+            label="Compras pendientes"
+            value={creditPending.length}
+            icon={<CreditCard size={20} />}
+          />
+        </div>
+      </div>
 
       {/* ── Ganancias de la plataforma ── */}
       <div>
