@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Plus, Store, ShoppingBag, ReceiptText, LayoutGrid } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, StatCard } from '@/components/ui/Card';
@@ -12,6 +12,54 @@ import {
   useCreateLocalCashOrder,
 } from '@/hooks/useOrders';
 import { formatCurrency } from '@/lib/utils';
+
+
+function QRPaymentModal({ 
+  onClose, 
+  onConfirm, 
+  qrImage, 
+  total,
+  loading 
+}: { 
+  onClose: () => void;
+  onConfirm: () => void;
+  qrImage?: string;
+  total: number;
+  loading: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+        <div className="flex justify-between items-center">
+          <h3 className="text-base font-bold text-gray-900">Cobro con QR</h3>
+          <span className="text-orange-600 font-bold">{formatCurrency(total)}</span>
+        </div>
+
+        <div className="flex flex-col items-center justify-center border-2 border-dashed border-gray-200 rounded-xl p-4 bg-gray-50">
+          {qrImage ? (
+            <img src={qrImage} alt="QR de pago" className="w-64 h-64 object-contain shadow-sm rounded-lg" />
+          ) : (
+            <div className="h-64 flex items-center justify-center text-gray-400 text-xs text-center p-10">
+              No hay un QR registrado para este negocio.
+            </div>
+          )}
+          <p className="text-[10px] text-gray-500 mt-4 text-center">
+            Pedí al cliente que escanee el código y verifique el monto antes de confirmar.
+          </p>
+        </div>
+
+        <div className="flex gap-3 pt-2">
+          <Button variant="ghost" className="flex-1" onClick={onClose} disabled={loading}>
+            Cancelar
+          </Button>
+          <Button variant="primary" className="flex-1" onClick={onConfirm} loading={loading}>
+            Confirmar Pago
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const RESTAURANT_AREA_KIND_OPTIONS = [
   { value: 'mesa',    label: 'Mesa' },
@@ -48,16 +96,22 @@ export default function ShopServicesPage() {
   const [newAreaName, setNewAreaName] = useState('');
   const [newAreaKind, setNewAreaKind] = useState<'mesa' | 'barra' | 'salon' | 'terraza'>('mesa');
   const [cart, setCart] = useState<CartLine[]>([]);
+  const [showQR, setShowQR] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const { data: restaurant, isLoading: loadingRestaurant } = useMyShop();
 
   const isMarket = restaurant?.businessType === 'supermarket' || restaurant?.businessType === 'minimarket';
+  const qrImage = restaurant?.qrImageUrl ?? undefined;
   const areaKindOptions = isMarket ? MARKET_AREA_KIND_OPTIONS : RESTAURANT_AREA_KIND_OPTIONS;
   const areaLabel = isMarket ? 'Caja / Mostrador' : 'Mesa / Área';
   const areaPlaceholder = isMarket ? 'Ej: Caja 2' : 'Ej: Mesa 8';
   const localLabel = isMarket ? 'Venta directa' : 'Consumo local';
   const serviceModeLabel = serviceType === 'local' ? localLabel : 'Recojo';
-  const submitLabel = isMarket ? 'Registrar venta en efectivo' : 'Registrar orden en efectivo';
+  const submitBillPayment = 'Cobro efectivo';
+  const submitQRPayment = 'Cobro en QR';
   const successMsg = isMarket ? 'Venta registrada en efectivo' : 'Orden registrada y confirmada en efectivo';
   const { data: areas = [], isLoading: loadingAreas } = useShopServiceAreas();
   const createArea = useCreateShopServiceArea();
@@ -152,13 +206,14 @@ export default function ShopServicesPage() {
 
       setCart([]);
       setNotes('');
+      setShowQR(false); // Cerramos el modal si estaba abierto
       toast.success(successMsg);
     } catch (error: unknown) {
       toast.error(getApiErrorMessage(error, 'No se pudo registrar la orden'));
     }
   }
 
-  if (loadingRestaurant) {
+  if (!mounted || loadingRestaurant) {
     return <div className="text-sm text-gray-500">Cargando servicios…</div>;
   }
 
@@ -271,14 +326,25 @@ export default function ShopServicesPage() {
               <p className="text-[11px] text-gray-500 mt-1">La orden se registra directamente en estado Confirmado.</p>
             </div>
 
-            <Button
-              className="w-full"
-              loading={createLocalOrder.isPending}
-              onClick={handleSubmitOrder}
-              disabled={!cart.length}
-            >
-              {submitLabel}
-            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                className="w-full"
+                loading={createLocalOrder.isPending && !showQR}
+                onClick={handleSubmitOrder}
+                disabled={!cart.length}
+              >
+                {submitBillPayment}
+              </Button>
+              <Button
+                variant='secondary'
+                className="w-full border-orange-500 text-orange-600 hover:bg-orange-50"
+                onClick={() => setShowQR(true)}
+                disabled={!cart.length}
+              >
+                {submitQRPayment}
+              </Button>
+            </div>
+            
 
             <div className="space-y-2 max-h-56 overflow-auto pr-1">
               {cart.map((line) => (
@@ -331,6 +397,15 @@ export default function ShopServicesPage() {
           </div>
         </Card>
       </div>
+      {showQR && (
+        <QRPaymentModal
+          total={totals.subtotal}
+          qrImage={qrImage}
+          loading={createLocalOrder.isPending}
+          onClose={() => setShowQR(false)}
+          onConfirm={handleSubmitOrder}
+        />
+      )}
     </div>
   );
 }

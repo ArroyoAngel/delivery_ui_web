@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Star,
@@ -16,8 +16,10 @@ import {
   Pencil,
   Check,
   X,
+  Upload,
+  QrCode,
 } from 'lucide-react';
-import { useMyShop, useToggleShopOpen } from '@/hooks/useShops';
+import { useMyShop, useToggleShopOpen, useUploadShopQr } from '@/hooks/useShops';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -30,6 +32,21 @@ export default function MyShopPage() {
   const router = useRouter();
   const { data: restaurant, isLoading, isError, refetch } = useMyShop();
   const toggleOpen = useToggleShopOpen();
+  const uploadQr = useUploadShopQr();
+  const qrInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleQrFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !restaurant) return;
+    try {
+      await uploadQr.mutateAsync({ shopId: restaurant.id, file });
+      toast.success('QR actualizado');
+    } catch {
+      toast.error('Error al subir el QR');
+    } finally {
+      if (qrInputRef.current) qrInputRef.current.value = '';
+    }
+  }
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -351,6 +368,44 @@ export default function MyShopPage() {
           </div>
         </div>
       </div>
+
+      {/* ── QR de pago ────────────────────────────────────────────────── */}
+      <Card title="QR de pago estático">
+        <div className="flex flex-col sm:flex-row items-start gap-5">
+          <div className="w-32 h-32 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center flex-shrink-0 overflow-hidden">
+            {restaurant.qrImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={restaurant.qrImageUrl} alt="QR de pago" className="w-full h-full object-contain" />
+            ) : (
+              <QrCode size={40} className="text-gray-300" />
+            )}
+          </div>
+          <div className="flex-1 space-y-2">
+            <p className="text-sm text-gray-600">
+              Este QR se muestra al cobrar en el punto de venta. El cliente lo escanea y confirma el monto manualmente.
+            </p>
+            {restaurant.qrImageUrl && (
+              <p className="text-xs text-gray-400 break-all">{restaurant.qrImageUrl}</p>
+            )}
+            <input
+              ref={qrInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="hidden"
+              onChange={handleQrFile}
+            />
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => qrInputRef.current?.click()}
+              loading={uploadQr.isPending}
+            >
+              <Upload size={14} />
+              {restaurant.qrImageUrl ? 'Cambiar QR' : 'Subir QR'}
+            </Button>
+          </div>
+        </div>
+      </Card>
 
       {/* ── Menu preview ──────────────────────────────────────────────── */}
       {(restaurant.menuCategories?.length ?? 0) > 0 ? (

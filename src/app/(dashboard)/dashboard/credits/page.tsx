@@ -29,7 +29,8 @@ interface CreditPurchase {
   payment_reference: string;
   credits_granted: number;
   amount_paid: number;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'expired';
+  status: 'pending' | 'confirmed' | 'cancelled' | 'expired' | 'rejected';
+  rejection_reason?: string | null;
   created_at: string;
   package_name: string;
   first_name: string;
@@ -158,14 +159,21 @@ function PackageModal({ pkg, onClose }: { pkg?: CreditPackage; onClose: () => vo
 function ProofModal({
   purchase,
   onConfirm,
+  onReject,
   onClose,
   confirming,
+  rejecting,
 }: {
   purchase: CreditPurchase;
   onConfirm: () => void;
+  onReject: (reason: string) => void;
   onClose: () => void;
   confirming: boolean;
+  rejecting: boolean;
 }) {
+  const [step, setStep] = useState<'view' | 'reject'>('view');
+  const [reason, setReason] = useState('');
+
   return (
     <div
       className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
@@ -175,37 +183,85 @@ function ProofModal({
         className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 space-y-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">Comprobante de pago</h2>
-          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
-            <X size={18} />
-          </button>
-        </div>
+        {step === 'view' ? (
+          <>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Comprobante de pago</h2>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
 
-        <div className="text-sm text-gray-600 space-y-1 bg-gray-50 rounded-lg p-3">
-          <p><span className="font-medium text-gray-800">Rider:</span> {purchase.first_name} {purchase.last_name}</p>
-          <p><span className="font-medium text-gray-800">Paquete:</span> {purchase.package_name}</p>
-          <p><span className="font-medium text-gray-800">Monto:</span> {formatCurrency(Number(purchase.amount_paid))}</p>
-          <p><span className="font-medium text-gray-800">Créditos:</span> {purchase.credits_granted}</p>
-          <p><span className="font-medium text-gray-800">Ref:</span> <code className="text-xs bg-white px-1.5 py-0.5 rounded border border-gray-200">{purchase.payment_reference}</code></p>
-        </div>
+            <div className="text-sm text-gray-600 space-y-1 bg-gray-50 rounded-lg p-3">
+              <p><span className="font-medium text-gray-800">Rider:</span> {purchase.first_name} {purchase.last_name}</p>
+              <p><span className="font-medium text-gray-800">Paquete:</span> {purchase.package_name}</p>
+              <p><span className="font-medium text-gray-800">Monto:</span> {formatCurrency(Number(purchase.amount_paid))}</p>
+              <p><span className="font-medium text-gray-800">Créditos:</span> {purchase.credits_granted}</p>
+              <p><span className="font-medium text-gray-800">Ref:</span> <code className="text-xs bg-white px-1.5 py-0.5 rounded border border-gray-200">{purchase.payment_reference}</code></p>
+            </div>
 
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src={purchase.proof_image_url!}
-          alt="Comprobante de pago"
-          className="w-full rounded-xl border border-gray-200 object-contain max-h-80 bg-gray-50"
-        />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={purchase.proof_image_url!}
+              alt="Comprobante de pago"
+              className="w-full rounded-xl border border-gray-200 object-contain max-h-80 bg-gray-50"
+            />
 
-        <div className="flex gap-2 pt-1">
-          <Button variant="ghost" size="sm" onClick={onClose} className="flex-1">
-            Cerrar
-          </Button>
-          <Button variant="primary" size="sm" onClick={onConfirm} loading={confirming} className="flex-1">
-            <CheckCircle size={14} />
-            Confirmar pago
-          </Button>
-        </div>
+            <div className="flex gap-2 pt-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setStep('reject')}
+                className="flex-1 !text-red-600 hover:!bg-red-50"
+              >
+                <XCircle size={14} />
+                Rechazar
+              </Button>
+              <Button variant="primary" size="sm" onClick={onConfirm} loading={confirming} className="flex-1">
+                <CheckCircle size={14} />
+                Confirmar pago
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold text-gray-900">Motivo de rechazo</h2>
+              <button onClick={() => setStep('view')} className="text-gray-400 hover:text-gray-600 transition-colors">
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-sm text-gray-500">
+              El rider verá este mensaje. Explicá por qué se rechaza el comprobante.
+            </p>
+
+            <textarea
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400/30 resize-none"
+              rows={4}
+              placeholder="Ej: El monto no coincide, la imagen es ilegible, referencia incorrecta..."
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              autoFocus
+            />
+
+            <div className="flex gap-2">
+              <Button variant="ghost" size="sm" onClick={() => setStep('view')} className="flex-1">
+                Volver
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => onReject(reason)}
+                loading={rejecting}
+                className="flex-1 !bg-red-600 hover:!bg-red-700"
+              >
+                <XCircle size={14} />
+                Confirmar rechazo
+              </Button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -219,6 +275,7 @@ function StatusBadge({ status }: { status: CreditPurchase['status'] }) {
     confirmed: { label: 'Confirmado', className: 'bg-green-100 text-green-700',   icon: <CheckCircle size={11} /> },
     cancelled: { label: 'Cancelado',  className: 'bg-gray-100 text-gray-500',     icon: <XCircle size={11} /> },
     expired:   { label: 'Expirado',   className: 'bg-red-100 text-red-500',       icon: <XCircle size={11} /> },
+    rejected:  { label: 'Rechazado',  className: 'bg-red-100 text-red-700',       icon: <XCircle size={11} /> },
   };
   const cfg = map[status] ?? map.pending;
   return (
@@ -249,6 +306,18 @@ export default function CreditsPage() {
       toast.success('Pago confirmado — créditos acreditados');
     },
     onError: () => toast.error('Error al confirmar el pago'),
+  });
+
+  const reject = useMutation({
+    mutationFn: async ({ reference, reason }: { reference: string; reason: string }) => {
+      await api.post(`/api/credits/admin/reject/${reference}`, { reason });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['credit-purchases'] });
+      setProofModal(null);
+      toast.success('Compra rechazada');
+    },
+    onError: () => toast.error('Error al rechazar la compra'),
   });
 
   const toggleActive = useMutation({
@@ -476,8 +545,10 @@ export default function CreditsPage() {
         <ProofModal
           purchase={proofModal}
           onConfirm={() => confirm.mutate(proofModal.payment_reference)}
+          onReject={(reason) => reject.mutate({ reference: proofModal.payment_reference, reason })}
           onClose={() => setProofModal(null)}
           confirming={confirm.isPending}
+          rejecting={reject.isPending}
         />
       )}
     </div>

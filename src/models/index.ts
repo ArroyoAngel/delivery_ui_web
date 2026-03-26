@@ -56,6 +56,7 @@ export interface Shop {
   openingTime?: string | null;
   closingTime?: string | null;
   businessType: string;
+  qrImageUrl?: string | null;
   createdAt: string;
 }
 

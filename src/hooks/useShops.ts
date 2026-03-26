@@ -187,6 +187,23 @@ export function useRemoveStaff() {
   });
 }
 
+export function useUploadShopQr() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ shopId, file }: { shopId: string; file: File }) => {
+      const form = new FormData();
+      form.append('file', file);
+      const { data } = await api.post<{ url: string }>(`/api/shops/${shopId}/upload-qr`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-shop'] });
+    },
+  });
+}
+
 export function useCreateMenuItem() {
   const qc = useQueryClient();
   return useMutation({
