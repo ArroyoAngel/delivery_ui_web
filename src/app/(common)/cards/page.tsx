@@ -8,8 +8,9 @@ import {
 } from 'lucide-react';
 
 export default function App() {
+  type CardMode = 'client' | 'driver' | 'restaurant';
   const [isFlipped, setIsFlipped] = useState(false);
-  const [cardMode, setCardMode] = useState('client');
+  const [cardMode, setCardMode] =  useState<CardMode>('client');
 
   // URLs para los QR
   const playStoreLink = "https://play.google.com/store/apps/details?id=com.yaya.eats"; 

@@ -1,3 +1,4 @@
+"use client";
 import React, { useState } from 'react';
 import { 
   Utensils, ShoppingCart, Pill, Store, Phone, Search, 
