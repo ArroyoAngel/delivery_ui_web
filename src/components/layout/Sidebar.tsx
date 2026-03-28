@@ -151,7 +151,7 @@ export default function Sidebar() {
   const { isOpen, close } = useSidebar();
   const { data: allowedRoutes = [], isLoading: loadingAccess } = useFrontendAccess();
   const { data: myStore } = useMyShop();
-  const isMarket = myStore?.businessType === 'supermarket' || myStore?.businessType === 'minimarket';
+  const isMarket = myStore?.serviceCategory === 'market';
 
   function handleLogout() {
     logout();

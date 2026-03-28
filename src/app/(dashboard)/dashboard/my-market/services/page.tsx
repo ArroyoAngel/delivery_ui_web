@@ -43,8 +43,9 @@ export default function MyMarketServicesPage() {
   const [cart, setCart] = useState<CartLine[]>([]);
 
   const { data: restaurant, isLoading: loadingRestaurant } = useMyShop();
-  const { data: areas = [], isLoading: loadingAreas } = useShopServiceAreas();
-  const createArea = useCreateShopServiceArea();
+  const shopId = restaurant?.id ?? '';
+  const { data: areas = [], isLoading: loadingAreas } = useShopServiceAreas(shopId);
+  const createArea = useCreateShopServiceArea(shopId);
   const createLocalOrder = useCreateLocalCashOrder();
 
   const menuItems = useMemo(() => {

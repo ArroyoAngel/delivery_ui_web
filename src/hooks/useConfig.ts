@@ -40,6 +40,7 @@ export function useDeliveryGroups() {
 
 export interface RiderInfo {
   id: string;
+  accountId: string;
   firstName: string;
   lastName: string;
   phone: string;
@@ -51,6 +52,11 @@ export interface RiderInfo {
   lng: number | null;
   createdAt: string;
   creditBalance?: number;
+  licenseFrontUrl: string | null;
+  licenseBackUrl: string | null;
+  plate: string | null;
+  policyUrl: string | null;
+  vin: string | null;
 }
 
 export function useRidersList() {

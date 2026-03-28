@@ -161,11 +161,45 @@ export function useMarkReady() {
   });
 }
 
+export function useMarkLocalDelivered() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.put(`/api/orders/${id}/deliver`);
+      return data;
+    },
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['orders', id] });
+    },
+  });
+}
+
+export interface AreaKindOption {
+  value: string;
+  label: string;
+  type: 'mesa' | 'zona' | 'seccion';
+  webIcon: string | null;
+  color: string;
+  sortOrder: number;
+}
+
+export function useAreaKindOptions() {
+  return useQuery<AreaKindOption[]>({
+    queryKey: ['area-kind-options'],
+    queryFn: async () => {
+      const { data } = await api.get('/api/orders/shop/local/area-kind-options');
+      return Array.isArray(data) ? data : [];
+    },
+    staleTime: Infinity,
+  });
+}
+
 export interface ShopServiceArea {
   id: string;
   shopId: string;
   name: string;
-  kind: 'mesa' | 'barra' | 'salon' | 'terraza';
+  kind: string;
   color: string;
   sortOrder: number;
   isActive: boolean;
@@ -179,27 +213,28 @@ export interface CreateLocalCashOrderPayload {
   items: Array<{ menuItemId: string; quantity: number; notes?: string }>;
 }
 
-export function useShopServiceAreas() {
+export function useShopServiceAreas(shopId: string) {
   return useQuery<ShopServiceArea[]>({
-    queryKey: ['shop-service-areas'],
+    queryKey: ['shop-service-areas', shopId],
     queryFn: async () => {
-      const { data } = await api.get('/api/orders/shop/local/areas');
+      const { data } = await api.get(`/api/orders/shop/${shopId}/local/areas`);
       return Array.isArray(data) ? data : [];
     },
+    enabled: !!shopId,
     staleTime: 30_000,
   });
 }
 
-export function useCreateShopServiceArea() {
+export function useCreateShopServiceArea(shopId: string) {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: async (body: { name: string; kind?: 'mesa' | 'barra' | 'salon' | 'terraza'; color?: string }) => {
-      const { data } = await api.post('/api/orders/shop/local/areas', body);
+    mutationFn: async (body: { name: string; kind?: string; color?: string }) => {
+      const { data } = await api.post(`/api/orders/shop/${shopId}/local/areas`, body);
       return data as ShopServiceArea;
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['shop-service-areas'] });
+      qc.invalidateQueries({ queryKey: ['shop-service-areas', shopId] });
     },
   });
 }

@@ -2,9 +2,11 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, ChefHat } from 'lucide-react';
 import { useOrders, useAdminOrders } from '@/hooks/useOrders';
+import { useOrdersSocket } from '@/hooks/useOrdersSocket';
 import { useAuthStore } from '@/store/useAuthStore';
+import KitchenView from '@/components/KitchenView';
 import DataTable, { Column } from '@/components/ui/DataTable';
 import Badge from '@/components/ui/Badge';
 import {
@@ -33,6 +35,8 @@ export default function OrdersPage() {
   const isAdmin = user?.roles.includes('superadmin') ?? false;
   const hasUser = !!user;
 
+  useOrdersSocket();
+
   const restaurantOrders = useOrders({ enabled: hasUser && !isAdmin });
   const adminOrders = useAdminOrders({ enabled: hasUser && isAdmin });
 
@@ -41,6 +45,7 @@ export default function OrdersPage() {
 
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<OrderStatus | ''>('');
+  const [kitchenOpen, setKitchenOpen] = useState(false);
 
   const filtered = (orders ?? []).filter((o) => {
     const matchStatus = !statusFilter || o.status === statusFilter;
@@ -128,6 +133,8 @@ export default function OrdersPage() {
 
   return (
     <div className="space-y-5">
+      {kitchenOpen && <KitchenView onClose={() => setKitchenOpen(false)} />}
+
       {/* Toolbar */}
       <div className="flex gap-3 flex-wrap items-center">
         <div className="relative flex-1 min-w-[200px] max-w-xs">
@@ -140,6 +147,17 @@ export default function OrdersPage() {
             className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400"
           />
         </div>
+
+        {!isAdmin && (
+          <button
+            type="button"
+            onClick={() => setKitchenOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg border border-orange-300 bg-orange-50 hover:bg-orange-100 text-orange-700 text-sm font-medium transition-colors"
+          >
+            <ChefHat size={15} />
+            Vista Cocina
+          </button>
+        )}
 
         <div className="relative">
           <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />

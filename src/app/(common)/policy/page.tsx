@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { ShieldCheck, FileText, AlertTriangle, CreditCard, Users, Lock, Mail } from 'lucide-react';
 
 const LAST_UPDATED = '25 de marzo de 2026';
-const CONTACT_EMAIL = 'soporte@yayaeats.com';
+const CONTACT_EMAIL = 'yaya.workspace.studio@gmail.com';
 const CONTACT_PHONE = '+591 73 666 496';
 
 function Section({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
@@ -197,7 +197,28 @@ export default function PolicyPage() {
           </div>
         </div>
 
-        <p className="text-center text-xs text-gray-300 mt-8">
+        {/* Attributions */}
+        <div className="mt-10 border-t border-gray-100 pt-6">
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">Créditos y atribuciones</p>
+          <ul className="space-y-1.5 text-xs text-gray-400">
+            <li>
+              Ícono de la aplicación &quot;Order food&quot; diseñado por{' '}
+              <a href="https://www.flaticon.com/authors/rian-maulana" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">Rian Maulana</a>
+              {' '}de{' '}
+              <a href="https://www.flaticon.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">Flaticon</a>
+              {' '}— utilizado bajo licencia gratuita con atribución.
+            </li>
+            <li>
+              Íconos de interfaz:{' '}
+              <a href="https://fontawesome.com" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">Font Awesome Free</a>
+              {' '}(CC BY 4.0) y{' '}
+              <a href="https://lucide.dev" target="_blank" rel="noopener noreferrer" className="underline hover:text-gray-600">Lucide</a>
+              {' '}(MIT).
+            </li>
+          </ul>
+        </div>
+
+        <p className="text-center text-xs text-gray-300 mt-6">
           © {new Date().getFullYear()} YaYa! Eats — Política de uso para negocios partners · v1.0
         </p>
       </div>

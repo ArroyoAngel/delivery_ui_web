@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Package } from 'lucide-react';
-import { useOrder, useMarkPreparing, useMarkReady } from '@/hooks/useOrders';
+import { useOrder, useMarkPreparing, useMarkReady, useMarkLocalDelivered } from '@/hooks/useOrders';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { Card } from '@/components/ui/Card';
@@ -32,6 +32,11 @@ export default function OrderDetailPage() {
   const { data: order, isLoading } = useOrder(params.id);
   const markPreparing = useMarkPreparing();
   const markReady = useMarkReady();
+  const markLocalDelivered = useMarkLocalDelivered();
+
+  const isLocalOrder =
+    order?.deliveryAddress?.startsWith('Consumo en local') ||
+    order?.deliveryAddress === 'Recojo en tienda';
 
   if (isLoading) return <PageLoader />;
   if (!order) return <p className="text-gray-500 p-8">Pedido no encontrado</p>;
@@ -49,6 +54,15 @@ export default function OrderDetailPage() {
     try {
       await markReady.mutateAsync(order!.id);
       toast.success('Pedido marcado como "Listo"');
+    } catch {
+      toast.error('Error al actualizar estado');
+    }
+  }
+
+  async function handleDeliver() {
+    try {
+      await markLocalDelivered.mutateAsync(order!.id);
+      toast.success('Pedido marcado como "Entregado"');
     } catch {
       toast.error('Error al actualizar estado');
     }
@@ -213,7 +227,16 @@ export default function OrderDetailPage() {
                 Iniciar preparación
               </Button>
             )}
-            {order.status === 'preparando' && (
+            {order.status === 'preparando' && isLocalOrder && (
+              <Button
+                variant="primary"
+                onClick={handleDeliver}
+                loading={markLocalDelivered.isPending}
+              >
+                Entregar
+              </Button>
+            )}
+            {order.status === 'preparando' && !isLocalOrder && (
               <Button
                 variant="primary"
                 onClick={handleReady}
@@ -225,6 +248,8 @@ export default function OrderDetailPage() {
             <p className="text-xs text-gray-400">
               {order.status === 'confirmado'
                 ? 'El pedido pasará a "Preparando"'
+                : isLocalOrder
+                ? 'El pedido pasará directamente a "Entregado"'
                 : 'El pedido quedará disponible para que el rider lo recoja'}
             </p>
           </div>

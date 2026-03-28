@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 export default function App() {
-  type CardMode = 'client' | 'driver' | 'restaurant';
+  type CardMode = 'client' | 'driver' | 'restaurant' | 'admin';
   const [isFlipped, setIsFlipped] = useState(false);
   const [cardMode, setCardMode] =  useState<CardMode>('client');
 
@@ -60,7 +60,23 @@ export default function App() {
       qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://wa.me/59173666496?text=${waRestMsg}`,
       qrText: 'Soporte Partners',
       mainIcon: Briefcase,
-      icons: [] 
+      icons: []
+    },
+    admin: {
+      title: 'Workspace',
+      color: 'from-[#1a1a2e] to-[#16213e]',
+      brandColor: 'text-[#FF6B00]',
+      tagline: '¡Gestión y control total!',
+      showLoginFields: false,
+      qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yaya.work/`,
+      qrText: 'Acceder al Panel',
+      mainIcon: ShieldCheck,
+      icons: [
+        { Icon: Briefcase, label: 'Gestión' },
+        { Icon: Store, label: 'Tiendas' },
+        { Icon: Bike, label: 'Riders' },
+        { Icon: Star, label: 'Reportes' },
+      ]
     }
   };
 
@@ -90,11 +106,17 @@ export default function App() {
           >
             RIDERS
           </button>
-          <button 
+          <button
             onClick={() => {setCardMode('restaurant'); setIsFlipped(false);}}
             className={`flex-1 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all ${cardMode === 'restaurant' ? 'bg-black text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50'}`}
           >
             RESTAURANTES
+          </button>
+          <button
+            onClick={() => {setCardMode('admin'); setIsFlipped(false);}}
+            className={`flex-1 py-3 text-xs sm:text-sm font-bold rounded-lg transition-all ${cardMode === 'admin' ? 'bg-[#1a1a2e] text-white shadow-lg' : 'text-gray-500 hover:bg-gray-50'}`}
+          >
+            ADMIN
           </button>
         </div>
       </div>
@@ -146,8 +168,8 @@ export default function App() {
 
             {/* Footer del Frente (Iconos) */}
             <div className="h-14 relative z-10 bg-black/20 backdrop-blur-md px-6 flex justify-between items-center text-[9px] sm:text-[10px] font-bold border-t border-white/10">
-              {cardMode !== 'restaurant' ? (
-                current.icons.map((item, idx) => (
+              {current.icons.length > 0 ? (
+                current.icons.map((item: { Icon: React.ElementType; label: string }, idx: number) => (
                   <div key={idx} className="flex flex-col items-center gap-1 opacity-90">
                     <item.Icon size={16} />
                     <span className="uppercase tracking-tighter">{item.label}</span>

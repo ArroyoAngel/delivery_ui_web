@@ -42,7 +42,7 @@ export default function ShopsPage() {
   }
 
   function storeIcon(r: Shop) {
-    if (r.businessType === 'supermarket' || r.businessType === 'minimarket') {
+    if (r.serviceCategory === 'market') {
       return <Store size={16} className="text-gray-300" />;
     }
     return <UtensilsCrossed size={16} className="text-gray-300" />;
@@ -152,7 +152,7 @@ export default function ShopsPage() {
               router.push(`/dashboard/shops/${r.id}/menu`);
             }}
           >
-            {r.businessType === 'supermarket' || r.businessType === 'minimarket' ? 'Catálogo' : 'Menú'}
+            {r.serviceCategory === 'market' ? 'Catálogo' : 'Menú'}
           </Button>
         </div>
       ),

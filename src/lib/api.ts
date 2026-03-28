@@ -23,6 +23,11 @@ api.interceptors.request.use((config) => {
       }
     }
   }
+  // Si el body es FormData, dejar que el navegador establezca el Content-Type
+  // con el boundary correcto (multipart/form-data; boundary=...)
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
   return config;
 });
 

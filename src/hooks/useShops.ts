@@ -3,6 +3,52 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import type { Shop, ShopDetail, ShopCategory } from '@/models';
+import { useAuthStore } from '@/store/useAuthStore';
+
+export interface BusinessType {
+  value: string;
+  label: string;
+  sortOrder: number;
+  serviceCategory: string;
+  flutterIcon: string | null;
+  bgColor: string | null;
+  iconColor: string | null;
+  webIcon: string | null;
+}
+
+export function useBusinessTypes() {
+  return useQuery<BusinessType[]>({
+    queryKey: ['business-types'],
+    queryFn: async () => {
+      const { data } = await api.get('/api/shops/business-types');
+      return data;
+    },
+    staleTime: Infinity, // tipos de negocio raramente cambian
+  });
+}
+
+export function useCreateShop() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (dto: {
+      name: string;
+      address: string;
+      description?: string;
+      businessType?: string;
+      ownerAccountId?: string;
+      deliveryTimeMin?: number;
+      minimumOrder?: number;
+      latitude?: number;
+      longitude?: number;
+    }) => {
+      const { data } = await api.post('/api/shops', dto);
+      return data as Shop;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['shops'] });
+    },
+  });
+}
 
 export function useShops(search?: string, categoryId?: string) {
   return useQuery<Shop[]>({
@@ -29,6 +75,7 @@ export function useShop(id: string) {
 }
 
 export function useMyShop() {
+  const { isSuperAdmin } = useAuthStore();
   return useQuery<ShopDetail | null>({
     queryKey: ['my-shop'],
     queryFn: async () => {
@@ -40,6 +87,7 @@ export function useMyShop() {
         throw err;
       }
     },
+    enabled: !isSuperAdmin(),
     retry: false,
   });
 }
@@ -183,6 +231,19 @@ export function useRemoveStaff() {
     },
     onSuccess: (_, variables) => {
       qc.invalidateQueries({ queryKey: ['shop-staff', variables.shopId] });
+    },
+  });
+}
+
+export function useUploadMenuItemImage() {
+  return useMutation({
+    mutationFn: async ({ shopId, file }: { shopId: string; file: File }) => {
+      const form = new FormData();
+      form.append('file', file);
+      const { data } = await api.post<{ url: string }>(`/api/shops/${shopId}/upload-menu-image`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return data.url;
     },
   });
 }

@@ -5,6 +5,21 @@ export type UserRole =
   | 'superadmin'
   | 'admin';
 
+export type VehicleType = 'moto' | 'auto' | 'bici';
+
+export interface RiderInfo {
+  vehicleType: VehicleType | null;
+  licenseFrontUrl: string | null;
+  licenseBackUrl: string | null;
+  plate: string | null;
+  policyUrl: string | null;
+  vin: string | null;
+}
+
+export interface AdminInfo {
+  startedAt: string | null;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -15,6 +30,8 @@ export interface User {
   googleId?: string;
   avatarUrl?: string;
   createdAt: string;
+  riderInfo?: RiderInfo | null;
+  adminInfo?: AdminInfo | null;
 }
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -56,6 +73,7 @@ export interface Shop {
   openingTime?: string | null;
   closingTime?: string | null;
   businessType: string;
+  serviceCategory?: string;
   qrImageUrl?: string | null;
   createdAt: string;
 }

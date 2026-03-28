@@ -53,12 +53,13 @@ function HeatmapMap({ geojson, token, heightClass }: { geojson: FeatureCollectio
     let map: import('mapbox-gl').Map | null = null;
 
     async function init() {
-      if (!mapRef.current) return;
+      const container = mapRef.current;
+      if (!container) return;
       const mapboxgl = (await import('mapbox-gl')).default;
       mapboxgl.accessToken = token;
 
       map = new mapboxgl.Map({
-        container: mapRef.current,
+        container,
         style: 'mapbox://styles/mapbox/light-v11',
         center: [-68.1193, -16.4897], // La Paz default
         zoom: 11,

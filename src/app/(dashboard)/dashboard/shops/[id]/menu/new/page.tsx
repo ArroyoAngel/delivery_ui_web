@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useShop } from '@/hooks/useShops';
-import { useCreateMenuItem, useCreateMenuCategory } from '@/hooks/useShops';
-import { ArrowLeft, Plus, Loader2 } from 'lucide-react';
+import { useCreateMenuItem, useCreateMenuCategory, useUploadMenuItemImage } from '@/hooks/useShops';
+import { ArrowLeft, Plus, Loader2, ImageIcon, Upload, X } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
@@ -14,6 +14,8 @@ export default function ShopNewMenuItemPage() {
   const { data: restaurant } = useShop(id);
   const createItem = useCreateMenuItem();
   const createCategory = useCreateMenuCategory();
+  const uploadImage = useUploadMenuItemImage();
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const [form, setForm] = useState({
     name: '',
@@ -72,6 +74,15 @@ export default function ShopNewMenuItemPage() {
       router.push(`/dashboard/shops/${id}/menu`);
     } catch {
       toast.error('Error al registrar el producto');
+    }
+  }
+
+  async function handleImageFile(file: File) {
+    try {
+      const url = await uploadImage.mutateAsync({ shopId: id, file });
+      set('imageUrl', url);
+    } catch {
+      toast.error('No se pudo subir la imagen');
     }
   }
 
@@ -224,16 +235,50 @@ export default function ShopNewMenuItemPage() {
           </div>
         </div>
 
-        {/* URL imagen */}
+        {/* Imagen del producto */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">URL de imagen</label>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Imagen del producto</label>
           <input
-            type="url"
-            value={form.imageUrl}
-            onChange={(e) => set('imageUrl', e.target.value)}
-            placeholder="https://…"
-            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400"
+            ref={imageInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) handleImageFile(f);
+              e.target.value = '';
+            }}
           />
+          <button
+            type="button"
+            onClick={() => imageInputRef.current?.click()}
+            disabled={uploadImage.isPending}
+            className="w-full h-32 rounded-lg border-2 border-dashed border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-colors flex flex-col items-center justify-center gap-1 overflow-hidden relative"
+          >
+            {form.imageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={form.imageUrl} alt="Imagen del producto" className="w-full h-full object-cover" />
+            ) : (
+              <>
+                <ImageIcon size={28} className="text-gray-300" />
+                <span className="text-xs text-gray-400">Subir imagen</span>
+              </>
+            )}
+            {uploadImage.isPending && (
+              <div className="absolute inset-0 bg-white/70 flex items-center justify-center">
+                <Upload size={16} className="text-orange-500 animate-bounce" />
+              </div>
+            )}
+          </button>
+          {form.imageUrl && (
+            <button
+              type="button"
+              onClick={() => set('imageUrl', '')}
+              className="text-xs text-red-400 hover:text-red-600 mt-1 flex items-center gap-1"
+            >
+              <X size={12} /> Quitar imagen
+            </button>
+          )}
         </div>
 
         {/* Disponible */}
