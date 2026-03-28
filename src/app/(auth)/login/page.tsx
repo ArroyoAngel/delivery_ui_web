@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuthStore } from '@/store/useAuthStore';
@@ -102,7 +103,15 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Contraseña</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-gray-700">Contraseña</label>
+              <Link
+                href="/reset-password"
+                className="text-xs text-orange-500 hover:text-orange-600 font-medium"
+              >
+                ¿Olvidaste tu contraseña?
+              </Link>
+            </div>
             <input
               type="password"
               autoComplete="current-password"

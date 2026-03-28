@@ -13,8 +13,7 @@ export default function App() {
   const [cardMode, setCardMode] =  useState<CardMode>('client');
 
   // URLs para los QR
-  const playStoreLink = "https://play.google.com/store/apps/details?id=com.yaya.eats"; 
-  const waDriverMsg = encodeURIComponent("Hola Ing. Luis, me contacto con usted gracias a su tarjeta. Me interesa ser Rider de YaYa! Eats.");
+  const playStoreLink = "https://play.google.com/store/apps/details?id=com.arroyo.yayaeats";
   const waRestMsg = encodeURIComponent("Hola Ing. Luis, me contacto con usted gracias a su tarjeta. Quiero activar mi restaurante en YaYa! Eats.");
 
   // Configuración de cada versión
@@ -41,8 +40,8 @@ export default function App() {
       brandColor: 'text-[#2563EB]',
       tagline: '¡Genera ingresos con tu Moto!',
       showLoginFields: false,
-      qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://wa.me/59173666496?text=${waDriverMsg}`,
-      qrText: 'Postular como Rider',
+      qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${playStoreLink}`,
+      qrText: 'Descarga la App',
       mainIcon: Bike,
       icons: [
         { Icon: Bike, label: 'Motos' },

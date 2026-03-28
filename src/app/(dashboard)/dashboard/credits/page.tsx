@@ -20,6 +20,7 @@ interface CreditPackage {
   bonusCredits: number;
   price: number;
   isActive: boolean;
+  qrImageUrl: string | null;
   createdAt: string;
 }
 
@@ -70,13 +71,31 @@ function PackageModal({ pkg, onClose }: { pkg?: CreditPackage; onClose: () => vo
     bonusCredits: pkg?.bonusCredits ?? 0,
     price: pkg?.price ?? 100,
   });
+  const [qrFile, setQrFile] = useState<File | null>(null);
+  const [qrPreview, setQrPreview] = useState<string | null>(pkg?.qrImageUrl ?? null);
+
+  function handleQrFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setQrFile(file);
+    setQrPreview(URL.createObjectURL(file));
+  }
 
   const save = useMutation({
     mutationFn: async () => {
+      let savedId = pkg?.id;
       if (pkg) {
         await api.patch(`/api/credits/packages/${pkg.id}`, form);
       } else {
-        await api.post('/api/credits/packages', form);
+        const { data } = await api.post('/api/credits/packages', form);
+        savedId = data.id;
+      }
+      if (qrFile && savedId) {
+        const fd = new FormData();
+        fd.append('file', qrFile);
+        await api.post(`/api/credits/packages/${savedId}/qr-image`, fd, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        });
       }
     },
     onSuccess: () => {
@@ -85,6 +104,20 @@ function PackageModal({ pkg, onClose }: { pkg?: CreditPackage; onClose: () => vo
       onClose();
     },
     onError: () => toast.error('Error al guardar'),
+  });
+
+  const removeQr = useMutation({
+    mutationFn: async () => {
+      if (!pkg) return;
+      await api.delete(`/api/credits/packages/${pkg.id}/qr-image`);
+    },
+    onSuccess: () => {
+      setQrPreview(null);
+      setQrFile(null);
+      qc.invalidateQueries({ queryKey: ['credit-packages'] });
+      toast.success('QR eliminado');
+    },
+    onError: () => toast.error('Error al eliminar el QR'),
   });
 
   return (
@@ -139,13 +172,58 @@ function PackageModal({ pkg, onClose }: { pkg?: CreditPackage; onClose: () => vo
               ({form.bonusCredits} de bonus)
             </p>
           )}
+
+          <div>
+            <label className="text-xs font-medium text-gray-600 mb-1 block">
+              QR de pago (opcional)
+            </label>
+            <p className="text-[11px] text-gray-400 mb-2">
+              Si no se sube, se usará el QR general de la plataforma.
+            </p>
+            {qrPreview ? (
+              <div className="relative w-full flex flex-col items-center border border-dashed border-gray-300 rounded-xl p-3 bg-gray-50">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={qrPreview} alt="QR paquete" className="w-32 h-32 object-contain rounded-lg" />
+                <div className="flex gap-2 mt-2">
+                  <label className="cursor-pointer text-xs text-orange-600 hover:underline font-medium">
+                    Cambiar
+                    <input type="file" accept="image/*" className="hidden" onChange={handleQrFile} />
+                  </label>
+                  {pkg?.qrImageUrl && !qrFile && (
+                    <button
+                      type="button"
+                      className="text-xs text-red-500 hover:underline font-medium"
+                      onClick={() => removeQr.mutate()}
+                    >
+                      Eliminar
+                    </button>
+                  )}
+                  {qrFile && (
+                    <button
+                      type="button"
+                      className="text-xs text-gray-400 hover:underline"
+                      onClick={() => { setQrFile(null); setQrPreview(pkg?.qrImageUrl ?? null); }}
+                    >
+                      Descartar
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <label className="cursor-pointer flex flex-col items-center justify-center border border-dashed border-gray-300 rounded-xl p-4 bg-gray-50 hover:border-orange-400 hover:bg-orange-50 transition-colors">
+                <FileImage size={20} className="text-gray-400 mb-1" />
+                <span className="text-xs text-gray-500">Subir imagen QR</span>
+                <input type="file" accept="image/*" className="hidden" onChange={handleQrFile} />
+              </label>
+            )}
+          </div>
         </div>
 
         <div className="flex gap-2 pt-2">
           <Button variant="ghost" size="sm" onClick={onClose} className="flex-1">
             Cancelar
           </Button>
-          <Button variant="primary" size="sm" onClick={() => save.mutate()} className="flex-1">
+          <Button variant="primary" size="sm" loading={save.isPending} onClick={() => save.mutate()} className="flex-1">
             Guardar
           </Button>
         </div>
@@ -360,6 +438,17 @@ export default function CreditsPage() {
       label: 'Precio',
       render: (p) => (
         <span className="text-sm font-medium text-gray-700">{formatCurrency(Number(p.price))}</span>
+      ),
+    },
+    {
+      key: 'qrImageUrl',
+      label: 'QR',
+      render: (p) => p.qrImageUrl ? (
+        <span className="inline-flex items-center gap-1 text-xs font-medium text-green-700 bg-green-50 px-2 py-0.5 rounded-full">
+          <FileImage size={11} /> Propio
+        </span>
+      ) : (
+        <span className="text-xs text-gray-400">General</span>
       ),
     },
     {
