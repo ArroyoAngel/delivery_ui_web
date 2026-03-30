@@ -11,20 +11,20 @@ const ROLE_CONFIG: Record<RoleKey, { label: string; color: string }> = {
   client:     { label: 'Cliente',               color: '#FF6B00' },
   rider:      { label: 'Rider / Delivery',      color: '#2563EB' },
   restaurant: { label: 'Restaurante / Partner', color: '#D4AF37' },
-  admin:      { label: 'Administrador',          color: '#1a1a2e' },
+  admin:      { label: 'Administrador',         color: '#1a1a2e' },
 };
 
 const WA_NUMBER = '59173666496';
 
-function buildWaUrl(label: string, name: string, email: string, phone?: string) {
+function buildWaMessage(label: string, name: string, email: string) {
   const lines = [
     `*Solicitud Beta – YaYa! Eats*`,
     `Rol: ${label}`,
     `Nombre: ${name}`,
     `Correo: ${email}`,
-    phone ? `📱 Teléfono: ${phone}` : '',
-  ].filter(Boolean);
-  return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(lines.join('\n'))}`;
+  ];
+  
+  return encodeURIComponent(lines.join('\n'));
 }
 
 export default function JoinPage() {
@@ -34,7 +34,6 @@ export default function JoinPage() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
   const [sent, setSent] = useState(false);
 
@@ -53,7 +52,6 @@ export default function JoinPage() {
       const auth = getAuth(app);
       const provider = new GoogleAuthProvider();
       
-      // Configuramos el provider para que pida seleccionar cuenta siempre
       provider.setCustomParameters({ prompt: 'select_account' });
 
       const result = await signInWithPopup(auth, provider);
@@ -61,19 +59,14 @@ export default function JoinPage() {
       
       await signOut(auth);
 
-      const url = buildWaUrl(
-        config.label,
-        displayName ?? '',
-        googleEmail ?? '',
-      );
-
-      // USAMOS ESTO PARA EVITAR EL BLOQUEO DE POPUPS/COOP
-      const newWindow = window.open(url, '_blank');
-      if (newWindow) {
-        newWindow.focus();
+      const message = buildWaMessage(config.label, displayName ?? '', googleEmail ?? '');
+      
+      const isMobile = /iPhone|Android|iPad|iPod/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        window.location.href = `whatsapp://send?phone=${WA_NUMBER}&text=${message}`;
       } else {
-        // Si el navegador bloqueó el popup, redirigimos en la misma pestaña
-        window.location.href = url;
+        window.open(`https://wa.me/${WA_NUMBER}?text=${message}`, '_blank');
       }
 
       setSent(true);
@@ -86,8 +79,17 @@ export default function JoinPage() {
 
   function handleFormSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const url = buildWaUrl(config.label, name.trim(), email.trim(), phone.trim() || undefined);
-    window.open(url, '_blank');
+    
+    const message = buildWaMessage(config.label, name.trim(), email.trim());
+    
+    const isMobile = /iPhone|Android|iPad|iPod/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      window.location.href = `whatsapp://send?phone=${WA_NUMBER}&text=${message}`;
+    } else {
+      window.open(`https://wa.me/${WA_NUMBER}?text=${message}`, '_blank');
+    }
+    
     setSent(true);
   }
 
@@ -120,7 +122,6 @@ export default function JoinPage() {
           </div>
         ) : (
           <>
-            {/* Header */}
             <div className="mb-5 text-center">
               <span
                 className="inline-block text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full text-white mb-3"
@@ -134,7 +135,6 @@ export default function JoinPage() {
               </p>
             </div>
 
-            {/* Google Sign-In */}
             <button
               onClick={handleGoogleSignIn}
               disabled={googleLoading}
@@ -154,17 +154,15 @@ export default function JoinPage() {
                   <path fill="none" d="M0 0h48v48H0z"/>
                 </svg>
               )}
-              Continuar con Google
+              <span className="ml-2 font-medium">Continuar con Google</span>
             </button>
 
-            {/* Divisor */}
             <div className="flex items-center gap-3 my-4">
               <div className="flex-1 h-px bg-gray-100" />
               <span className="text-xs text-gray-400">o ingresa tus datos</span>
               <div className="flex-1 h-px bg-gray-100" />
             </div>
 
-            {/* Formulario manual */}
             <form onSubmit={handleFormSubmit} className="space-y-3">
               <div>
                 <label className="text-xs font-semibold text-gray-600 block mb-1">
@@ -189,19 +187,6 @@ export default function JoinPage() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="tu@correo.com"
-                />
-              </div>
-              <div>
-                <label className="text-xs font-semibold text-gray-600 block mb-1">
-                  Teléfono{' '}
-                  <span className="text-gray-400 font-normal">(opcional)</span>
-                </label>
-                <input
-                  type="tel"
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="70000000"
                 />
               </div>
               <button
