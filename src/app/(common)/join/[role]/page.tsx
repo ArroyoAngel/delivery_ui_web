@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { Send } from 'lucide-react';
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut } from 'firebase/auth';
 import { app } from '@/lib/firebase';
 
 type RoleKey = 'client' | 'rider' | 'restaurant' | 'admin';
