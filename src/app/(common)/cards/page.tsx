@@ -13,9 +13,6 @@ export default function App() {
   const [cardMode, setCardMode] =  useState<CardMode>('client');
 
   // URLs para los QR
-  const playStoreLink = "https://play.google.com/store/apps/details?id=com.arroyo.yayaeats";
-  const waRestMsg = encodeURIComponent("Hola Ing. Luis, me contacto con usted gracias a su tarjeta. Quiero activar mi restaurante en YaYa! Eats.");
-
   // Configuración de cada versión
   const cardData = {
     client: {
@@ -24,8 +21,8 @@ export default function App() {
       brandColor: 'text-[#FF6B00]',
       tagline: '¡Lo que necesites, al instante!',
       showLoginFields: false,
-      qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${playStoreLink}`,
-      qrText: 'Descarga la App',
+      qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yaya.work/join/client`,
+      qrText: 'Únete a la Beta',
       mainIcon: Utensils,
       icons: [
         { Icon: Utensils, label: 'Restaurantes' },
@@ -40,8 +37,8 @@ export default function App() {
       brandColor: 'text-[#2563EB]',
       tagline: '¡Genera ingresos con tu Moto!',
       showLoginFields: false,
-      qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${playStoreLink}`,
-      qrText: 'Descarga la App',
+      qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yaya.work/join/rider`,
+      qrText: 'Únete como Rider',
       mainIcon: Bike,
       icons: [
         { Icon: Bike, label: 'Motos' },
@@ -56,8 +53,8 @@ export default function App() {
       brandColor: 'text-[#D4AF37]', // Dorado/Oro para el toque formal
       tagline: 'CREDENCIALES DE ACCESO:',
       showLoginFields: true,
-      qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://wa.me/59173666496?text=${waRestMsg}`,
-      qrText: 'Soporte Partners',
+      qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yaya.work/join/restaurant`,
+      qrText: 'Registra tu Local',
       mainIcon: Briefcase,
       icons: []
     },
@@ -67,7 +64,7 @@ export default function App() {
       brandColor: 'text-[#FF6B00]',
       tagline: '¡Gestión y control total!',
       showLoginFields: false,
-      qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yaya.work/`,
+      qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=https://yaya.work/join/admin`,
       qrText: 'Acceder al Panel',
       mainIcon: ShieldCheck,
       icons: [

@@ -1,4 +1,5 @@
 import { initializeApp, getApps } from 'firebase/app';
+import { getAuth, GoogleAuthProvider } from 'firebase/auth';
 import { getMessaging, getToken, onMessage, Messaging } from 'firebase/messaging';
 
 const firebaseConfig = {
@@ -11,7 +12,10 @@ const firebaseConfig = {
 };
 
 // Inicializar una sola vez (Next.js hot-reload safe)
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+// 2. Exportamos las herramientas de Auth para que la página las use
+export const auth = getAuth(app);
+export const googleProvider = new GoogleAuthProvider();
 
 export function getFirebaseMessaging(): Messaging | null {
   if (typeof window === 'undefined') return null;
