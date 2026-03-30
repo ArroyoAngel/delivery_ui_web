@@ -151,6 +151,30 @@ export function useUpdateMenuItemAvailability() {
   });
 }
 
+export function useUpdateMenuItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      shopId,
+      itemId,
+      ...dto
+    }: {
+      shopId: string;
+      itemId: string;
+      name?: string;
+      description?: string;
+      price?: number;
+      imageUrl?: string;
+    }) => {
+      const { data } = await api.patch(`/api/shops/${shopId}/menu/${itemId}`, dto);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['my-shop'] });
+    },
+  });
+}
+
 export function useCreateMenuCategory() {
   const qc = useQueryClient();
   return useMutation({
