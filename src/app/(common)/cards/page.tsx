@@ -80,7 +80,7 @@ export default function App() {
   const MainBgIcon = current.mainIcon;
 
   return (
-    <div className="min-h-screen bg-gray-200 flex flex-col items-center justify-center p-4 font-sans">
+    <div className="min-h-screen bg-[#FF6B00] flex flex-col items-center justify-center p-4 font-sans">
       
       <div className="mb-6 text-center max-w-lg w-full">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Editor de Tarjetas YaYa!</h1>
