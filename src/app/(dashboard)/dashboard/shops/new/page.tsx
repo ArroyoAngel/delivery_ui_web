@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, UserPlus, Users } from 'lucide-react';
-import { useCreateShop, useBusinessTypes } from '@/hooks/useShops';
+import { ArrowLeft, Save, UserPlus, Users, Upload, X } from 'lucide-react';
+import { useCreateShop, useBusinessTypes, useShopCategories, useAssignShopCategories, useUploadShopImage } from '@/hooks/useShops';
 import { useAdminUsers, useCreateAdminUser } from '@/hooks/useUsers';
 import Button from '@/components/ui/Button';
+import SelectableChip from '@/components/ui/SelectableChip';
 import ShopLocationPicker from '@/components/ui/ShopLocationPicker';
 import toast from 'react-hot-toast';
 
@@ -19,8 +20,12 @@ export default function NewShopPage() {
   const router = useRouter();
   const createShop = useCreateShop();
   const createAdminUser = useCreateAdminUser();
+  const assignCategories = useAssignShopCategories();
+  const uploadImage = useUploadShopImage();
   const { data: adminUsers = [] } = useAdminUsers();
   const { data: businessTypes = [] } = useBusinessTypes();
+  const { data: allCategories = [] } = useShopCategories();
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Shop fields
   const [name, setName] = useState('');
@@ -29,6 +34,8 @@ export default function NewShopPage() {
   const [businessType, setBusinessType] = useState('restaurant');
   const [deliveryTimeMin, setDeliveryTimeMin] = useState('30');
   const [minimumOrder, setMinimumOrder] = useState('0');
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   // GPS
   const [lat, setLat] = useState<number | null>(null);
@@ -51,17 +58,47 @@ export default function NewShopPage() {
   const hasAvailableAdmins = availableAdmins.length > 0;
   const effectiveMode: OwnerMode = hasAvailableAdmins ? ownerMode : 'new';
 
-  const isSubmitting = createShop.isPending || createAdminUser.isPending;
+  // Filtrar categorías por tipo de negocio
+  const availableCategories = useMemo(
+    () => allCategories.filter((cat: any) => cat.business_type_id === businessType),
+    [allCategories, businessType],
+  );
+
+  // Limpiar categorías seleccionadas cuando cambia el tipo de negocio
+  const handleBusinessTypeChange = (value: string) => {
+    setBusinessType(value);
+    setSelectedCategoryIds([]);
+  };
+
+  const isSubmitting = createShop.isPending || createAdminUser.isPending || assignCategories.isPending;
 
   function handleMapChange(newLat: number | null, newLng: number | null) {
     setLat(newLat);
     setLng(newLng);
   }
 
+  async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      const url = await uploadImage.mutateAsync({ shopId: 'temp', file });
+      setImageUrl(url);
+      toast.success('Imagen cargada');
+    } catch {
+      toast.error('Error al subir imagen');
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim() || !address.trim()) {
       toast.error('Nombre y dirección son obligatorios');
+      return;
+    }
+
+    if (lat === null || lng === null) {
+      toast.error('La ubicación en el mapa es obligatoria');
       return;
     }
 
@@ -106,6 +143,31 @@ export default function NewShopPage() {
         latitude: lat ?? undefined,
         longitude: lng ?? undefined,
       });
+
+      // Subir imagen si hay seleccionada
+      if (imageUrl && imageInputRef.current?.files?.[0]) {
+        try {
+          await uploadImage.mutateAsync({
+            shopId: shop.id,
+            file: imageInputRef.current.files[0],
+          });
+        } catch {
+          toast.error('Negocio creado pero no se pudo subir la imagen');
+        }
+      }
+
+      // Asignar categorías si hay seleccionadas
+      if (selectedCategoryIds.length > 0) {
+        try {
+          await assignCategories.mutateAsync({
+            shopId: shop.id,
+            categoryIds: selectedCategoryIds,
+          });
+        } catch {
+          toast.error('Negocio creado pero no se pudieron asignar las categorías');
+        }
+      }
+
       toast.success('Negocio creado correctamente');
       router.push(`/dashboard/shops/${shop.id}`);
     } catch {
@@ -127,15 +189,84 @@ export default function NewShopPage() {
 
       <form onSubmit={handleSubmit} className="bg-white rounded-xl border border-gray-200 p-6 space-y-5">
 
+        {/* Imagen */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Imagen del negocio</label>
+          <div className="flex items-center gap-4">
+            {imageUrl ? (
+              <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-gray-100">
+                <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                <button
+                  type="button"
+                  onClick={() => {
+                    setImageUrl(null);
+                    if (imageInputRef.current) imageInputRef.current.value = '';
+                  }}
+                  className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="w-24 h-24 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400">
+                <Upload size={24} />
+              </div>
+            )}
+            <div className="flex-1">
+              <input
+                ref={imageInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                disabled={uploadImage.isPending}
+                className="hidden"
+                id="image-input"
+              />
+              <label
+                htmlFor="image-input"
+                className="inline-block px-4 py-2 bg-orange-500 text-white rounded-lg cursor-pointer hover:bg-orange-600 transition-colors"
+              >
+                {uploadImage.isPending ? 'Subiendo...' : 'Seleccionar imagen'}
+              </label>
+              <p className="text-xs text-gray-500 mt-2">PNG, JPG, máx 5MB</p>
+            </div>
+          </div>
+        </div>
+
         {/* Tipo de negocio */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Tipo de negocio</label>
-          <select value={businessType} onChange={(e) => setBusinessType(e.target.value)} className={INPUT_CLS}>
+          <select value={businessType} onChange={(e) => handleBusinessTypeChange(e.target.value)} className={INPUT_CLS}>
             {businessTypes.map((t) => (
               <option key={t.value} value={t.value}>{t.label}</option>
             ))}
           </select>
         </div>
+
+        {/* Categorías */}
+        {availableCategories.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Categorías</label>
+            <div className="flex flex-wrap gap-2">
+              {availableCategories.map((cat: any) => (
+                <SelectableChip
+                  key={cat.id}
+                  id={cat.id}
+                  label={cat.name}
+                  icon={cat.icon}
+                  selected={selectedCategoryIds.includes(cat.id)}
+                  onToggle={(id) => {
+                    if (selectedCategoryIds.includes(id)) {
+                      setSelectedCategoryIds(selectedCategoryIds.filter((cid) => cid !== id));
+                    } else {
+                      setSelectedCategoryIds([...selectedCategoryIds, id]);
+                    }
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Nombre */}
         <div>
@@ -183,7 +314,7 @@ export default function NewShopPage() {
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Ubicación en el mapa
-            <span className="ml-1.5 text-xs font-normal text-gray-400">(opcional)</span>
+            <span className="text-red-500"> *</span>
           </label>
           <ShopLocationPicker lat={lat} lng={lng} onChange={handleMapChange} />
         </div>

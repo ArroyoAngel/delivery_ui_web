@@ -289,6 +289,38 @@ export function useUploadShopQr() {
   });
 }
 
+export function useUploadShopImage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ shopId, file }: { shopId: string; file: File }) => {
+      const form = new FormData();
+      form.append('file', file);
+      const { data } = await api.post<{ imageUrls: string[] }>(`/api/shops/${shopId}/upload-image`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return data.imageUrls;
+    },
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['shops', variables.shopId] });
+      qc.invalidateQueries({ queryKey: ['my-shop'] });
+    },
+  });
+}
+
+export function useRemoveShopImage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ shopId, imageUrl }: { shopId: string; imageUrl: string }) => {
+      const { data } = await api.delete<{ imageUrls: string[] }>(`/api/shops/${shopId}/image?imageUrl=${encodeURIComponent(imageUrl)}`);
+      return data.imageUrls;
+    },
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['shops', variables.shopId] });
+      qc.invalidateQueries({ queryKey: ['my-shop'] });
+    },
+  });
+}
+
 export function useCreateMenuItem() {
   const qc = useQueryClient();
   return useMutation({
@@ -308,6 +340,20 @@ export function useCreateMenuItem() {
       size?: number;
     }) => {
       const { data } = await api.post(`/api/shops/${shopId}/menu`, body);
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['shops', variables.shopId] });
+      qc.invalidateQueries({ queryKey: ['my-shop'] });
+    },
+  });
+}
+
+export function useAssignShopCategories() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ shopId, categoryIds }: { shopId: string; categoryIds: string[] }) => {
+      const { data } = await api.post(`/api/shops/${shopId}/categories`, { categoryIds });
       return data;
     },
     onSuccess: (_, variables) => {

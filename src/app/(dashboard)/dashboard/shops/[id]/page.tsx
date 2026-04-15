@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -18,9 +18,11 @@ import {
   Check,
   X,
 } from 'lucide-react';
-import { useShop, useToggleShopOpen } from '@/hooks/useShops';
+import { useShop, useToggleShopOpen, useShopCategories, useAssignShopCategories } from '@/hooks/useShops';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import SelectableChip from '@/components/ui/SelectableChip';
+import ShopLocationPicker from '@/components/ui/ShopLocationPicker';
 import Badge from '@/components/ui/Badge';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import { formatCurrency } from '@/lib/utils';
@@ -32,10 +34,13 @@ export default function ShopDetailPage() {
   const router = useRouter();
   const { data: restaurant, isLoading, refetch } = useShop(params.id);
   const toggleOpen = useToggleShopOpen();
+  const assignCategories = useAssignShopCategories();
+  const { data: allCategories = [] } = useShopCategories();
 
   // Editable fields state
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -45,7 +50,15 @@ export default function ShopDetailPage() {
     minimumOrder: '',
     openingTime: '',
     closingTime: '',
+    latitude: '',
+    longitude: '',
   });
+
+  // Filtrar categorías por tipo de negocio
+  const availableCategories = useMemo(
+    () => allCategories.filter((cat: any) => cat.business_type_id === restaurant?.businessTypeId),
+    [allCategories, restaurant?.businessTypeId],
+  );
 
   function startEdit() {
     if (!restaurant) return;
@@ -58,7 +71,10 @@ export default function ShopDetailPage() {
       minimumOrder: String(restaurant.minimumOrder),
       openingTime: restaurant.openingTime ?? '',
       closingTime: restaurant.closingTime ?? '',
+      latitude: String(restaurant.latitude ?? ''),
+      longitude: String(restaurant.longitude ?? ''),
     });
+    setSelectedCategoryIds([]);
     setEditing(true);
   }
 
@@ -74,7 +90,22 @@ export default function ShopDetailPage() {
         minimumOrder: Number(form.minimumOrder),
         openingTime: form.openingTime || null,
         closingTime: form.closingTime || null,
+        latitude: form.latitude ? Number(form.latitude) : undefined,
+        longitude: form.longitude ? Number(form.longitude) : undefined,
       });
+
+      // Guardar categorías si hay seleccionadas
+      if (selectedCategoryIds.length > 0 || availableCategories.length > 0) {
+        try {
+          await assignCategories.mutateAsync({
+            shopId: params.id,
+            categoryIds: selectedCategoryIds,
+          });
+        } catch {
+          toast.error('Se actualizó el negocio pero no se pudieron guardar las categorías');
+        }
+      }
+
       await refetch();
       setEditing(false);
       toast.success('Negocio actualizado');
@@ -169,14 +200,41 @@ export default function ShopDetailPage() {
 
       {/* ── Info card ─────────────────────────────────────────────────── */}
       <Card>
-        <div className="flex gap-4">
-          {/* Image */}
-          <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
-            {restaurant.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={restaurant.imageUrl} alt={restaurant.name} className="w-full h-full object-cover" />
+        <div className="grid grid-cols-[auto_1fr] gap-6">
+          {/* Images Gallery - Columna izquierda */}
+          <div className="flex flex-col gap-2">
+            {editing ? (
+              // Modo edición: mostrar todas las imágenes verticalmente
+              <>
+                {(restaurant.imageUrls ?? []).length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    {(restaurant.imageUrls ?? []).map((url: string) => (
+                      <div key={url} className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt={restaurant.name} className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-xl bg-gray-100 flex items-center justify-center text-gray-300">
+                    <Package size={28} />
+                  </div>
+                )}
+              </>
             ) : (
-              <Package size={28} className="text-gray-300" />
+              // Modo vista: mostrar solo la primera imagen
+              <>
+                {(restaurant.imageUrls ?? []).length > 0 ? (
+                  <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={(restaurant.imageUrls ?? [])[0]} alt={restaurant.name} className="w-full h-full object-cover" />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 rounded-xl bg-gray-100 flex items-center justify-center text-gray-300">
+                    <Package size={28} />
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -253,6 +311,43 @@ export default function ShopDetailPage() {
                     onChange={(e) => setForm((f) => ({ ...f, closingTime: e.target.value }))}
                   />
                 </div>
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-gray-500 mb-2">Ubicación en el mapa</label>
+                  <ShopLocationPicker
+                    lat={Number(form.latitude) || restaurant?.latitude || null}
+                    lng={Number(form.longitude) || restaurant?.longitude || null}
+                    onChange={(lat, lng) => {
+                      setForm((f) => ({
+                        ...f,
+                        latitude: lat ? String(lat) : '',
+                        longitude: lng ? String(lng) : '',
+                      }));
+                    }}
+                  />
+                </div>
+                {availableCategories.length > 0 && (
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-gray-500 mb-2">Categorías</label>
+                    <div className="flex flex-wrap gap-2 p-2 border border-gray-200 rounded-lg bg-gray-50">
+                      {availableCategories.map((cat: any) => (
+                        <SelectableChip
+                          key={cat.id}
+                          id={cat.id}
+                          label={cat.name}
+                          icon={cat.icon}
+                          selected={selectedCategoryIds.includes(cat.id)}
+                          onToggle={(id) => {
+                            if (selectedCategoryIds.includes(id)) {
+                              setSelectedCategoryIds(selectedCategoryIds.filter((cid) => cid !== id));
+                            } else {
+                              setSelectedCategoryIds([...selectedCategoryIds, id]);
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             ) : (
               <>
@@ -278,9 +373,6 @@ export default function ShopDetailPage() {
                     label={`⭐ ${Number(restaurant.rating).toFixed(1)}`}
                     className="bg-yellow-50 text-yellow-700"
                   />
-                  {restaurant.category && (
-                    <Badge label={restaurant.category.name} className="bg-blue-50 text-blue-700" />
-                  )}
                 </div>
 
                 <p className="text-sm text-gray-600">{restaurant.description || 'Sin descripción'}</p>

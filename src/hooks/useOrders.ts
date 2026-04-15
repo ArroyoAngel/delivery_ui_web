@@ -66,6 +66,9 @@ function normalizeShopOrder(raw: unknown): Order {
     notes: typeof obj.notes === 'string' ? obj.notes : undefined,
     items,
     groupId: obj.groupId ? String(obj.groupId) : undefined,
+    paymentProofUrl: obj.paymentProofUrl ?? obj.payment_proof_url ?? null,
+    paymentMethod: String(obj.paymentMethod ?? obj.payment_method ?? 'qr'),
+    paidAt: obj.paidAt ?? obj.paid_at ?? null,
     createdAt: String(obj.createdAt ?? new Date().toISOString()),
     updatedAt: String(obj.updatedAt ?? obj.createdAt ?? new Date().toISOString()),
   };
@@ -100,7 +103,7 @@ export function useOrder(id: string) {
     queryFn: async () => {
       try {
         const { data } = await api.get(`/api/orders/${id}`);
-        return data;
+        return normalizeShopOrder(data);
       } catch (error: unknown) {
         const status =
           (error as { response?: { status?: number } })?.response?.status;
@@ -252,6 +255,38 @@ export function useCreateLocalCashOrder() {
       qc.invalidateQueries({ queryKey: ['admin-orders'] });
       qc.invalidateQueries({ queryKey: ['shop-service-areas'] });
       qc.invalidateQueries({ queryKey: ['my-shop'] });
+    },
+  });
+}
+
+export function useManualConfirmPayment() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { data } = await api.post(`/api/orders/${id}/confirm-manual`, {});
+      return data;
+    },
+    onSuccess: (_, id) => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['orders', id] });
+      qc.invalidateQueries({ queryKey: ['admin-orders'] });
+    },
+  });
+}
+
+export function useRejectPayment() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, reason }: { id: string; reason: string }) => {
+      const { data } = await api.post(`/api/orders/${id}/reject-payment`, { reason });
+      return data;
+    },
+    onSuccess: (_, variables) => {
+      qc.invalidateQueries({ queryKey: ['orders'] });
+      qc.invalidateQueries({ queryKey: ['orders', variables.id] });
+      qc.invalidateQueries({ queryKey: ['admin-orders'] });
     },
   });
 }

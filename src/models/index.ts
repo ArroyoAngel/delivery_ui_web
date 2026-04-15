@@ -61,9 +61,7 @@ export interface Shop {
   address: string;
   latitude: number;
   longitude: number;
-  categoryId: string;
-  category?: ShopCategory;
-  imageUrl: string;
+  imageUrls: string[];
   rating: number;
   deliveryTimeMin: number;
   deliveryFee: number;
@@ -72,7 +70,7 @@ export interface Shop {
   status: 'active' | 'disabled';
   openingTime?: string | null;
   closingTime?: string | null;
-  businessType: string;
+  businessTypeId: string;
   serviceCategory?: string;
   qrImageUrl?: string | null;
   createdAt: string;
@@ -155,6 +153,9 @@ export interface Order {
   isExpress?: boolean;
   items?: OrderItem[];
   groupId?: string;
+  paymentProofUrl?: string | null;
+  paymentMethod?: string;
+  paidAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }

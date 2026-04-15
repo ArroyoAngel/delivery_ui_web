@@ -1,7 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, MapPin, Package } from 'lucide-react';
+import { ArrowLeft, MapPin, Package, X } from 'lucide-react';
 import { useOrder, useMarkPreparing, useMarkReady, useMarkLocalDelivered } from '@/hooks/useOrders';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
@@ -33,6 +34,7 @@ export default function OrderDetailPage() {
   const markPreparing = useMarkPreparing();
   const markReady = useMarkReady();
   const markLocalDelivered = useMarkLocalDelivered();
+  const [proofImageModal, setProofImageModal] = useState(false);
 
   const isLocalOrder =
     order?.deliveryAddress?.startsWith('Consumo en local') ||
@@ -194,7 +196,7 @@ export default function OrderDetailPage() {
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-medium text-gray-900">
-                    {item.menuItem?.name ?? `Item ${item.menu_item_id.slice(0, 8)}`}
+                    {item.menuItem?.name ?? item.item_name ?? `Item ${item.menu_item_id.slice(0, 8)}`}
                   </p>
                   {item.notes && (
                     <p className="text-xs text-gray-400">{item.notes}</p>
@@ -211,6 +213,28 @@ export default function OrderDetailPage() {
               </div>
             ))}
           </div>
+        </Card>
+      )}
+
+      {/* Comprobante de Pago */}
+      {order.status === 'pendiente' && order.paymentMethod === 'qr' && (
+        <Card title="Comprobante de Pago QR">
+          {order.paymentProofUrl ? (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-600">Comprobante enviado por el cliente</p>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setProofImageModal(true)}
+              >
+                Ver imagen
+              </Button>
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <p className="text-gray-500 text-sm">No hay comprobante enviado aún</p>
+            </div>
+          )}
         </Card>
       )}
 
@@ -294,6 +318,34 @@ export default function OrderDetailPage() {
           })}
         </div>
       </Card>
+
+      {/* Proof Image Modal */}
+      {proofImageModal && order.paymentProofUrl && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+          onClick={() => setProofImageModal(false)}
+        >
+          <div
+            className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto relative"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setProofImageModal(false)}
+              className="absolute top-3 right-3 p-2 hover:bg-gray-100 rounded-lg transition-all z-10"
+            >
+              <X size={20} className="text-gray-500" />
+            </button>
+            <div className="p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Comprobante de Pago</h3>
+              <img
+                src={order.paymentProofUrl}
+                alt="Comprobante de pago"
+                className="w-full rounded-lg"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

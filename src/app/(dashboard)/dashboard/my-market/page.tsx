@@ -269,9 +269,6 @@ export default function MyMarketPage() {
                     label={`⭐ ${Number(restaurant.rating).toFixed(1)}`}
                     className="bg-yellow-50 text-yellow-700"
                   />
-                  {restaurant.category && (
-                    <Badge label={restaurant.category.name} className="bg-blue-50 text-blue-700" />
-                  )}
                 </div>
 
                 <p className="text-sm text-gray-600">{restaurant.description || 'Sin descripción'}</p>

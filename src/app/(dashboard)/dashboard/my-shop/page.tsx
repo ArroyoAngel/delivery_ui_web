@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useRef, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Star,
@@ -18,10 +18,13 @@ import {
   X,
   Upload,
   QrCode,
+  Plus,
+  Trash2,
 } from 'lucide-react';
-import { useMyShop, useToggleShopOpen, useUploadShopQr } from '@/hooks/useShops';
+import { useMyShop, useToggleShopOpen, useUploadShopQr, useShopCategories, useAssignShopCategories, useUploadShopImage, useRemoveShopImage, useBusinessTypes } from '@/hooks/useShops';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
+import SelectableChip from '@/components/ui/SelectableChip';
 import Badge from '@/components/ui/Badge';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import { formatCurrency } from '@/lib/utils';
@@ -31,9 +34,37 @@ import api from '@/lib/api';
 export default function MyShopPage() {
   const router = useRouter();
   const { data: restaurant, isLoading, isError, refetch } = useMyShop();
+  const { data: businessTypes = [] } = useBusinessTypes();
   const toggleOpen = useToggleShopOpen();
   const uploadQr = useUploadShopQr();
+  const assignCategories = useAssignShopCategories();
+  const { data: allCategories = [] } = useShopCategories();
+  const uploadImage = useUploadShopImage();
+  const removeImage = useRemoveShopImage();
   const qrInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [editingImages, setEditingImages] = useState<string[]>([]);
+  const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
+  const [form, setForm] = useState({
+    name: '',
+    description: '',
+    address: '',
+    deliveryFee: '',
+    deliveryTimeMin: '',
+    minimumOrder: '',
+    openingTime: '',
+    closingTime: '',
+  });
+
+  // Filtrar categorías por tipo de negocio
+  const availableCategories = useMemo(
+    () => allCategories.filter((cat: any) => cat.business_type_id === restaurant?.businessTypeId),
+    [allCategories, restaurant?.businessTypeId],
+  );
 
   async function handleQrFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -48,18 +79,43 @@ export default function MyShopPage() {
     }
   }
 
-  const [editing, setEditing] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({
-    name: '',
-    description: '',
-    address: '',
-    deliveryFee: '',
-    deliveryTimeMin: '',
-    minimumOrder: '',
-    openingTime: '',
-    closingTime: '',
-  });
+  async function handleImageFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Verificar que no exceda 5 imágenes
+    if ((restaurant?.imageUrls?.length ?? 0) + editingImages.length >= 5) {
+      toast.error('Máximo 5 imágenes permitidas');
+      return;
+    }
+
+    setNewImageFiles([...newImageFiles, file]);
+
+    // Mostrar preview inmediatamente
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setEditingImages([...editingImages, event.target?.result as string]);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function removeEditingImage(index: number) {
+    setEditingImages((prev) => prev.filter((_, i) => i !== index));
+    setNewImageFiles((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  async function handleRemoveImage(imageUrl: string) {
+    if (!restaurant) return;
+    try {
+      await removeImage.mutateAsync({
+        shopId: restaurant.id,
+        imageUrl,
+      });
+      toast.success('Imagen eliminada');
+    } catch {
+      toast.error('Error al eliminar la imagen');
+    }
+  }
 
   function startEdit() {
     if (!restaurant) return;
@@ -73,12 +129,16 @@ export default function MyShopPage() {
       openingTime: restaurant.openingTime ?? '',
       closingTime: restaurant.closingTime ?? '',
     });
+    setSelectedCategoryIds([]);
+    setEditingImages([]);
+    setNewImageFiles([]);
     setEditing(true);
   }
 
   async function saveEdit() {
     setSaving(true);
     try {
+      // Guardar cambios básicos del negocio
       await api.patch(`/api/shops/${restaurant!.id}`, {
         name: form.name,
         description: form.description,
@@ -89,8 +149,37 @@ export default function MyShopPage() {
         openingTime: form.openingTime || null,
         closingTime: form.closingTime || null,
       });
+
+      // Guardar todas las imágenes nuevas si fueron seleccionadas
+      if (newImageFiles.length > 0) {
+        try {
+          for (const file of newImageFiles) {
+            await uploadImage.mutateAsync({
+              shopId: restaurant!.id,
+              file,
+            });
+          }
+        } catch {
+          toast.error('Se actualizó el negocio pero no se pudieron guardar todas las imágenes');
+        }
+      }
+
+      // Guardar categorías si hay seleccionadas
+      if (selectedCategoryIds.length > 0 || availableCategories.length > 0) {
+        try {
+          await assignCategories.mutateAsync({
+            shopId: restaurant!.id,
+            categoryIds: selectedCategoryIds,
+          });
+        } catch {
+          toast.error('Se actualizó el negocio pero no se pudieron guardar las categorías');
+        }
+      }
+
       await refetch();
       setEditing(false);
+      setEditingImages([]);
+      setNewImageFiles([]);
       toast.success('Negocio actualizado');
     } catch {
       toast.error('Error al guardar cambios');
@@ -179,14 +268,85 @@ export default function MyShopPage() {
 
       {/* ── Info card ─────────────────────────────────────────────────── */}
       <Card>
-        <div className="flex gap-4">
-          {/* Image */}
-          <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
-            {restaurant.imageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={restaurant.imageUrl} alt={restaurant.name} className="w-full h-full object-cover" />
+        <div className="grid grid-cols-[auto_1fr] gap-6">
+          {/* Galería de imágenes - Columna izquierda */}
+          <div className="flex flex-col gap-2">
+            {editing && <label className="text-xs font-medium text-gray-500">Imágenes ({(restaurant?.imageUrls?.length ?? 0) + editingImages.length}/5)</label>}
+            {editing ? (
+              <>
+                <div className="flex flex-col gap-2">
+                  {/* Botón + para agregar imagen (solo si hay menos de 5) */}
+                  {(restaurant?.imageUrls?.length ?? 0) + editingImages.length < 5 && (
+                    <button
+                      type="button"
+                      onClick={() => imageInputRef.current?.click()}
+                      className="w-20 h-20 rounded-lg border-2 border-dashed border-orange-300 flex items-center justify-center cursor-pointer hover:bg-orange-50 transition-colors"
+                    >
+                      <Plus size={24} className="text-orange-500" />
+                    </button>
+                  )}
+
+                  {/* Imágenes existentes (del restaurant) */}
+                  {(restaurant?.imageUrls ?? []).map((url) => (
+                    <div
+                      key={url}
+                      className="relative group w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={url} alt="shop" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(url)}
+                        className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                      >
+                        <Trash2 size={16} className="text-white" />
+                      </button>
+                    </div>
+                  ))}
+
+                  {/* Preview de nueva imagen (si hay) */}
+                  {editingImages.map((preview, idx) => (
+                    <div
+                      key={`preview-${idx}`}
+                      className="relative group w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0"
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={preview} alt="preview" className="w-full h-full object-cover opacity-50 border border-orange-300" />
+                      <button
+                        type="button"
+                        onClick={() => removeEditingImage(idx)}
+                        className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-100 transition-opacity cursor-pointer"
+                      >
+                        <Trash2 size={16} className="text-white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleImageFile}
+                  className="hidden"
+                />
+              </>
             ) : (
-              <Package size={28} className="text-gray-300" />
+              <>
+                {(restaurant?.imageUrls ?? []).length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    {(restaurant?.imageUrls ?? []).map((url) => (
+                      <div key={url} className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={url} alt="shop" className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="w-20 h-20 rounded-lg bg-gray-100 flex items-center justify-center text-gray-300">
+                    <Package size={28} />
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -212,12 +372,35 @@ export default function MyShopPage() {
                 </div>
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-medium text-gray-500 mb-1">Descripción</label>
-                  <input
+                  <textarea
                     className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-                    value={form.description}
+                    value={form.description} rows={3}
                     onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   />
                 </div>
+                {availableCategories.length > 0 && (
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-medium text-gray-500 mb-2">Categorías</label>
+                    <div className="flex flex-wrap gap-2 p-2 border border-gray-200 rounded-lg bg-gray-50">
+                      {availableCategories.map((cat: any) => (
+                        <SelectableChip
+                          key={cat.id}
+                          id={cat.id}
+                          label={cat.name}
+                          icon={cat.icon}
+                          selected={selectedCategoryIds.includes(cat.id)}
+                          onToggle={(id) => {
+                            if (selectedCategoryIds.includes(id)) {
+                              setSelectedCategoryIds(selectedCategoryIds.filter((cid) => cid !== id));
+                            } else {
+                              setSelectedCategoryIds([...selectedCategoryIds, id]);
+                            }
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">Fee de delivery (Bs)</label>
                   <input
@@ -265,62 +448,161 @@ export default function MyShopPage() {
                 </div>
               </div>
             ) : (
-              <>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={handleToggle}
-                    className="flex items-center gap-1.5 transition-all"
-                    disabled={toggleOpen.isPending}
-                  >
-                    {restaurant.isOpen ? (
-                      <>
-                        <ToggleRight size={20} className="text-green-500" />
-                        <Badge label="Abierto" className="bg-green-100 text-green-700" />
-                      </>
-                    ) : (
-                      <>
-                        <ToggleLeft size={20} className="text-gray-400" />
-                        <Badge label="Cerrado" className="bg-gray-100 text-gray-500" />
-                      </>
-                    )}
-                  </button>
-                  <Badge
-                    label={`⭐ ${Number(restaurant.rating).toFixed(1)}`}
-                    className="bg-yellow-50 text-yellow-700"
-                  />
-                  {restaurant.category && (
-                    <Badge label={restaurant.category.name} className="bg-blue-50 text-blue-700" />
-                  )}
+              <div className="space-y-4">
+                {/* Header con toggle y rating */}
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleToggle}
+                      className="flex items-center gap-1.5 transition-all"
+                      disabled={toggleOpen.isPending}
+                    >
+                      {restaurant.isOpen ? (
+                        <>
+                          <ToggleRight size={20} className="text-green-500" />
+                          <Badge label="Abierto" className="bg-green-100 text-green-700" />
+                        </>
+                      ) : (
+                        <>
+                          <ToggleLeft size={20} className="text-gray-400" />
+                          <Badge label="Cerrado" className="bg-gray-100 text-gray-500" />
+                        </>
+                      )}
+                    </button>
+                    <Badge
+                      label={`⭐ ${Number(restaurant.rating).toFixed(1)}`}
+                      className="bg-yellow-50 text-yellow-700"
+                    />
+                  </div>
                 </div>
 
-                <p className="text-sm text-gray-600">{restaurant.description || 'Sin descripción'}</p>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <DollarSign size={14} className="text-orange-400 flex-shrink-0" />
-                    <span>Fee: <strong>{formatCurrency(Number(restaurant.deliveryFee))}</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <Clock size={14} className="text-orange-400 flex-shrink-0" />
-                    <span><strong>{restaurant.deliveryTimeMin}</strong> min</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <ShoppingBag size={14} className="text-orange-400 flex-shrink-0" />
-                    <span>Mín: <strong>{formatCurrency(Number(restaurant.minimumOrder))}</strong></span>
-                  </div>
-                  {(restaurant.openingTime || restaurant.closingTime) && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600 col-span-2 sm:col-span-1">
-                      <Clock size={14} className="text-orange-400 flex-shrink-0" />
-                      <span>
-                        Horario:{' '}
-                        <strong>
-                          {restaurant.openingTime ?? '—'} – {restaurant.closingTime ?? '—'}
-                        </strong>
-                      </span>
+                {/* 2 columnas: Info izquierda | Métricas derecha */}
+                <div className="grid grid-cols-2 gap-6">
+                  {/* Columna izquierda: Info del negocio */}
+                  <div className="space-y-3 text-sm">
+                    {/* Tipo de negocio */}
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 uppercase">Tipo</p>
+                      <p className="text-gray-900 font-medium">
+                        {businessTypes.find((bt: any) => bt.value === restaurant.businessTypeId)?.label || 'Sin tipo'}
+                      </p>
                     </div>
-                  )}
+
+                    {/* Descripción */}
+                    <div>
+                      <p className="text-xs font-medium text-gray-500 uppercase">Descripción</p>
+                      <p className="text-gray-600">{restaurant.description || 'Sin descripción'}</p>
+                    </div>
+
+                    {/* Dirección */}
+                    <div className="flex gap-2">
+                      <MapPin size={14} className="text-orange-400 flex-shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase">Ubicación</p>
+                        <p className="text-gray-600">{restaurant.address}</p>
+                      </div>
+                    </div>
+
+                    {/* Categorías del menú */}
+                    {restaurant.menuCategories && restaurant.menuCategories.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase mb-1">Categorías</p>
+                        <div className="flex flex-wrap gap-1">
+                          {restaurant.menuCategories.map((cat: any) => (
+                            <Badge
+                              key={cat.id}
+                              label={cat.name}
+                              className="bg-orange-50 text-orange-700 text-xs"
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* QR de pago */}
+                    {restaurant.qrImageUrl && (
+                      <div>
+                        <p className="text-xs font-medium text-gray-500 uppercase">QR de Pago</p>
+                        <div className="w-16 h-16 rounded-lg bg-gray-100 overflow-hidden border border-gray-200">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={restaurant.qrImageUrl} alt="QR" className="w-full h-full object-cover" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Columna derecha: Métricas y detalles operacionales */}
+                  <div className="space-y-3">
+                    {(() => {
+                      const allItems = (restaurant.menuCategories ?? []).flatMap((cat: any) => cat.items ?? []);
+                      const prices = allItems.map((item: any) => Number(item.price)).filter((p: number) => !isNaN(p));
+                      const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+                      const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+                      const avgPrice = prices.length > 0 ? (prices.reduce((a: number, b: number) => a + b, 0) / prices.length).toFixed(2) : 0;
+
+                      return (
+                        <div className="bg-orange-50 rounded-lg p-3 space-y-2">
+                          <p className="text-xs font-medium text-gray-500 uppercase">Rango de Precios</p>
+                          <div className="flex items-center gap-2">
+                            <DollarSign size={16} className="text-orange-500" />
+                            <div>
+                              <p className="text-xs text-gray-600">Mínimo</p>
+                              <p className="font-semibold text-gray-900">{formatCurrency(minPrice)}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 pt-2 border-t border-orange-200">
+                            <DollarSign size={16} className="text-orange-500" />
+                            <div>
+                              <p className="text-xs text-gray-600">Promedio</p>
+                              <p className="font-semibold text-gray-900">{formatCurrency(Number(avgPrice))}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 pt-2 border-t border-orange-200">
+                            <DollarSign size={16} className="text-orange-500" />
+                            <div>
+                              <p className="text-xs text-gray-600">Máximo</p>
+                              <p className="font-semibold text-gray-900">{formatCurrency(maxPrice)}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <div className="bg-red-50 rounded-lg p-3">
+                      <p className="text-xs font-medium text-gray-500 uppercase mb-2">Configuración</p>
+                      <div className="flex items-center gap-2">
+                        <ShoppingBag size={16} className="text-red-500" />
+                        <div>
+                          <p className="text-xs text-gray-600">Pedido mínimo</p>
+                          <p className="font-semibold text-gray-900">{formatCurrency(Number(restaurant.minimumOrder))}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 rounded-lg p-3 space-y-2">
+                      <p className="text-xs font-medium text-gray-500 uppercase">Operación</p>
+                      <div className="flex items-center gap-2">
+                        <Clock size={16} className="text-blue-500" />
+                        <div>
+                          <p className="text-xs text-gray-600">Tiempo entrega</p>
+                          <p className="font-semibold text-gray-900">{restaurant.deliveryTimeMin} min</p>
+                        </div>
+                      </div>
+                      {(restaurant.openingTime || restaurant.closingTime) && (
+                        <div className="flex items-center gap-2 pt-2 border-t border-blue-200">
+                          <Clock size={16} className="text-blue-500" />
+                          <div>
+                            <p className="text-xs text-gray-600">Horario</p>
+                            <p className="font-semibold text-gray-900">
+                              {restaurant.openingTime ?? '—'} – {restaurant.closingTime ?? '—'}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </>
+              </div>
             )}
           </div>
         </div>
