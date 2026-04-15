@@ -48,7 +48,7 @@ El dashboard estara en `http://localhost:3000`.
 
 El servidor QA es `85.31.62.55`. El dashboard corre en `/opt/yaya-eats/delivery_ui_web/`.
 
-### Proceso de deploy
+### Proceso de deploy (Docker Compose)
 
 ```bash
 # 1. Subir cambios al repositorio
@@ -60,38 +60,65 @@ git push origin main
 ssh root@85.31.62.55
 
 # 3. En el servidor: actualizar y rebuild
-cd /opt/yaya-eats/delivery_ui_web
-git pull origin main
-npm install
-npm run build
-
-# 4. Reiniciar el proceso (si usa PM2)
-pm2 restart delivery_ui_web
-
-# o si usa docker:
 cd /opt/yaya-eats
-docker compose build delivery_ui_web
-docker compose up -d delivery_ui_web
+git pull origin main
+docker compose down
+docker compose up -d --build
 ```
 
 ### Variables de entorno en QA
 
-En QA se usa `.env` como archivo canonico. Por compatibilidad con el flujo actual de deploy, el pipeline tambien replica ese contenido a `.env.local` en el VPS si hace falta.
+En QA se usa `.env.qa` como archivo canónico.
 
 Contenido esperado en QA:
 
 ```env
-NEXT_PUBLIC_API_URL=https://api.yaya.work
+NEXT_PUBLIC_API_URL=https://yaya.work
 NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=pk.eyJ1IjoiYXJyb3lvYW5nZWwiLCJhIjoiY21...
 ```
 
 Para editar:
 
 ```bash
-nano /opt/yaya-eats/delivery_ui_web/.env
-npm run build
-pm2 restart delivery_ui_web
+nano /opt/yaya-eats/delivery_ui_web/.env.qa
+cd /opt/yaya-eats
+git add delivery_ui_web/.env.qa
+git commit -m "chore: update environment"
+git push
+git pull
+docker compose down
+docker compose up -d --build
 ```
+
+---
+
+## Troubleshooting
+
+### Ver logs del Docker en QA
+
+```bash
+# Ver últimos logs
+docker logs yaya-eats-web-1
+
+# Ver logs en tiempo real
+docker logs -f yaya-eats-web-1
+
+# Ver últimas 100 líneas en tiempo real
+docker logs -f --tail 100 yaya-eats-web-1
+
+# Ver logs de otra fecha/hora
+docker logs yaya-eats-web-1 | grep "2026-04-15"
+```
+
+### Problemas comunes
+
+**Mixed Content error (HTTPS page + HTTP API)**
+- Verifica que `NEXT_PUBLIC_API_URL` apunte a `https://yaya.work` (sin puerto)
+- Nginx del sistema debe estar corriendo y proxeando correctamente
+
+**Doble `/api` en la URL (ej: `/api/api/auth/login`)**
+- Verifica que `NEXT_PUBLIC_API_URL` NO termina con `/api`
+- Debe ser `https://yaya.work`, no `https://yaya.work/api`
 
 ---
 

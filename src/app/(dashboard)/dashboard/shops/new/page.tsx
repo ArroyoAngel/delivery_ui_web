@@ -83,13 +83,12 @@ export default function NewShopPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    try {
-      const url = await uploadImage.mutateAsync({ shopId: 'temp', file });
-      setImageUrl(url[0]);
-      toast.success('Imagen cargada');
-    } catch {
-      toast.error('Error al subir imagen');
-    }
+    // Local preview sin subir al servidor hasta que exista la tienda
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setImageUrl(event.target?.result as string);
+    };
+    reader.readAsDataURL(file);
   }
 
   async function handleSubmit(e: React.FormEvent) {
