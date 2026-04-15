@@ -21,7 +21,8 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
-import { useMyShop, useToggleShopOpen, useUploadShopQr, useShopCategories, useAssignShopCategories, useUploadShopImage, useRemoveShopImage, useBusinessTypes } from '@/hooks/useShops';
+import { useMyShop, useToggleShopOpen, useUploadShopQr, useShopCategories, useAssignShopCategories, useUploadShopImage, useRemoveShopImage, useBusinessTypes, type BusinessType } from '@/hooks/useShops';
+import { type ShopCategory, type MenuCategory, type MenuItem } from '@/models';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import SelectableChip from '@/components/ui/SelectableChip';
@@ -62,7 +63,7 @@ export default function MyShopPage() {
 
   // Filtrar categorías por tipo de negocio
   const availableCategories = useMemo(
-    () => allCategories.filter((cat: any) => cat.business_type_id === restaurant?.businessTypeId),
+    () => allCategories.filter((cat: ShopCategory) => cat.id === restaurant?.businessTypeId),
     [allCategories, restaurant?.businessTypeId],
   );
 
@@ -382,7 +383,7 @@ export default function MyShopPage() {
                   <div className="sm:col-span-2">
                     <label className="block text-xs font-medium text-gray-500 mb-2">Categorías</label>
                     <div className="flex flex-wrap gap-2 p-2 border border-gray-200 rounded-lg bg-gray-50">
-                      {availableCategories.map((cat: any) => (
+                      {availableCategories.map((cat: ShopCategory) => (
                         <SelectableChip
                           key={cat.id}
                           id={cat.id}
@@ -484,7 +485,7 @@ export default function MyShopPage() {
                     <div>
                       <p className="text-xs font-medium text-gray-500 uppercase">Tipo</p>
                       <p className="text-gray-900 font-medium">
-                        {businessTypes.find((bt: any) => bt.value === restaurant.businessTypeId)?.label || 'Sin tipo'}
+                        {businessTypes.find((bt: BusinessType) => bt.value === restaurant.businessTypeId)?.label || 'Sin tipo'}
                       </p>
                     </div>
 
@@ -508,7 +509,7 @@ export default function MyShopPage() {
                       <div>
                         <p className="text-xs font-medium text-gray-500 uppercase mb-1">Categorías</p>
                         <div className="flex flex-wrap gap-1">
-                          {restaurant.menuCategories.map((cat: any) => (
+                          {restaurant.menuCategories.map((cat: MenuCategory & { items: MenuItem[] }) => (
                             <Badge
                               key={cat.id}
                               label={cat.name}
@@ -534,8 +535,8 @@ export default function MyShopPage() {
                   {/* Columna derecha: Métricas y detalles operacionales */}
                   <div className="space-y-3">
                     {(() => {
-                      const allItems = (restaurant.menuCategories ?? []).flatMap((cat: any) => cat.items ?? []);
-                      const prices = allItems.map((item: any) => Number(item.price)).filter((p: number) => !isNaN(p));
+                      const allItems = (restaurant.menuCategories ?? []).flatMap((cat: MenuCategory & { items: MenuItem[] }) => cat.items ?? []);
+                      const prices = allItems.map((item: MenuItem) => Number(item.price)).filter((p: number) => !isNaN(p));
                       const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
                       const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
                       const avgPrice = prices.length > 0 ? (prices.reduce((a: number, b: number) => a + b, 0) / prices.length).toFixed(2) : 0;

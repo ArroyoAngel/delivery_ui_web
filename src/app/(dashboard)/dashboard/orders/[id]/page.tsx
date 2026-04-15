@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import { ArrowLeft, MapPin, Package, X } from 'lucide-react';
 import { useOrder, useMarkPreparing, useMarkReady, useMarkLocalDelivered } from '@/hooks/useOrders';
@@ -337,11 +338,17 @@ export default function OrderDetailPage() {
             </button>
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Comprobante de Pago</h3>
-              <img
-                src={order.paymentProofUrl}
-                alt="Comprobante de pago"
-                className="w-full rounded-lg"
-              />
+              <div className="relative w-full h-96">
+                <Image
+                  src={order.paymentProofUrl || ''}
+                  alt="Comprobante de pago"
+                  fill
+                  className="rounded-lg object-contain"
+                  onError={(e) => {
+                    e.currentTarget.src = '/placeholder.png';
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

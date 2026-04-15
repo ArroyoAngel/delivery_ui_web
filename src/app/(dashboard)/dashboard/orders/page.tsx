@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Search, Filter, ChefHat, CheckCircle, Clock } from 'lucide-react';
 import { useOrders, useAdminOrders, useManualConfirmPayment, useRejectPayment } from '@/hooks/useOrders';
@@ -303,11 +304,14 @@ export default function OrdersPage() {
                 {proofModal.paymentProofUrl ? (
                   <div>
                     <p className="text-xs text-gray-500 mb-2">Comprobante enviado:</p>
-                    <img
-                      src={proofModal.paymentProofUrl}
-                      alt="Comprobante de pago"
-                      className="w-full rounded-lg border border-gray-200"
-                    />
+                    <div className="relative w-full h-64">
+                      <Image
+                        src={proofModal.paymentProofUrl}
+                        alt="Comprobante de pago"
+                        fill
+                        className="rounded-lg border border-gray-200 object-contain"
+                      />
+                    </div>
                   </div>
                 ) : (
                   <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
@@ -324,7 +328,7 @@ export default function OrdersPage() {
                         await manualConfirm.mutateAsync(proofModal.id);
                         toast.success('Pago confirmado manualmente');
                         setProofModal(null);
-                      } catch (err) {
+                      } catch {
                         toast.error('Error al confirmar pago');
                       }
                     }}
@@ -384,7 +388,7 @@ export default function OrdersPage() {
                         });
                         toast.success('Pago rechazado');
                         setProofModal(null);
-                      } catch (err) {
+                      } catch {
                         toast.error('Error al rechazar pago');
                       }
                     }}

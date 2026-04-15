@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useMemo, useRef } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, UserPlus, Users, Upload, X } from 'lucide-react';
 import { useCreateShop, useBusinessTypes, useShopCategories, useAssignShopCategories, useUploadShopImage } from '@/hooks/useShops';
+import { type ShopCategory } from '@/models';
 import { useAdminUsers, useCreateAdminUser } from '@/hooks/useUsers';
 import Button from '@/components/ui/Button';
 import SelectableChip from '@/components/ui/SelectableChip';
@@ -60,7 +62,7 @@ export default function NewShopPage() {
 
   // Filtrar categorías por tipo de negocio
   const availableCategories = useMemo(
-    () => allCategories.filter((cat: any) => cat.business_type_id === businessType),
+    () => allCategories.filter((cat: ShopCategory) => cat.id === businessType),
     [allCategories, businessType],
   );
 
@@ -195,7 +197,7 @@ export default function NewShopPage() {
           <div className="flex items-center gap-4">
             {imageUrl ? (
               <div className="relative w-24 h-24 rounded-lg overflow-hidden bg-gray-100">
-                <img src={imageUrl} alt="Preview" className="w-full h-full object-cover" />
+                <Image src={imageUrl} alt="Preview" fill className="object-cover" />
                 <button
                   type="button"
                   onClick={() => {
@@ -248,7 +250,7 @@ export default function NewShopPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Categorías</label>
             <div className="flex flex-wrap gap-2">
-              {availableCategories.map((cat: any) => (
+              {availableCategories.map((cat: ShopCategory) => (
                 <SelectableChip
                   key={cat.id}
                   id={cat.id}

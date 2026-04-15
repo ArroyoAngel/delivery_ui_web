@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react';
 import { useShop, useToggleShopOpen, useShopCategories, useAssignShopCategories } from '@/hooks/useShops';
+import { type ShopCategory } from '@/models';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import SelectableChip from '@/components/ui/SelectableChip';
@@ -56,7 +57,7 @@ export default function ShopDetailPage() {
 
   // Filtrar categorías por tipo de negocio
   const availableCategories = useMemo(
-    () => allCategories.filter((cat: any) => cat.business_type_id === restaurant?.businessTypeId),
+    () => allCategories.filter((cat: ShopCategory) => cat.id === restaurant?.businessTypeId),
     [allCategories, restaurant?.businessTypeId],
   );
 
@@ -329,7 +330,7 @@ export default function ShopDetailPage() {
                   <div className="sm:col-span-2">
                     <label className="block text-xs font-medium text-gray-500 mb-2">Categorías</label>
                     <div className="flex flex-wrap gap-2 p-2 border border-gray-200 rounded-lg bg-gray-50">
-                      {availableCategories.map((cat: any) => (
+                      {availableCategories.map((cat: ShopCategory) => (
                         <SelectableChip
                           key={cat.id}
                           id={cat.id}
