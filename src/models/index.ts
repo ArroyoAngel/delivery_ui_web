@@ -51,6 +51,7 @@ export interface ShopCategory {
   name: string;
   icon: string;
   sortOrder: number;
+  businessTypeId: string;
 }
 
 export interface Shop {

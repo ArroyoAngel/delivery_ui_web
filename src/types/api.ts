@@ -3,6 +3,14 @@
  * These represent the exact structure returned by the server
  */
 
+export type RawShopCategory = {
+  id: string;
+  name: string;
+  icon: string;
+  sort_order: number;
+  business_type_id: string;
+};
+
 export type RawOrderItem = {
   id?: string;
   order_id?: string;

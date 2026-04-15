@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import type { Shop, ShopDetail, ShopCategory } from '@/models';
+import type { RawShopCategory } from '@/types/api';
 import { useAuthStore } from '@/store/useAuthStore';
 
 export interface BusinessType {
@@ -97,8 +98,15 @@ export function useShopCategories() {
   return useQuery<ShopCategory[]>({
     queryKey: ['shop-categories'],
     queryFn: async () => {
-      const { data } = await api.get('/api/shops/categories');
-      return data;
+      const { data } = await api.get<RawShopCategory[]>('/api/shops/categories');
+      // Mapear snake_case del API a camelCase del modelo TypeScript
+      return data.map((cat) => ({
+        id: cat.id,
+        name: cat.name,
+        icon: cat.icon,
+        sortOrder: cat.sort_order,
+        businessTypeId: cat.business_type_id,
+      }));
     },
   });
 }

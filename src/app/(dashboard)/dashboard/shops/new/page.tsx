@@ -62,7 +62,7 @@ export default function NewShopPage() {
 
   // Filtrar categorías por tipo de negocio
   const availableCategories = useMemo(
-    () => allCategories.filter((cat: ShopCategory) => cat.id === businessType),
+    () => allCategories.filter((cat: ShopCategory) => cat.businessTypeId === businessType),
     [allCategories, businessType],
   );
 
