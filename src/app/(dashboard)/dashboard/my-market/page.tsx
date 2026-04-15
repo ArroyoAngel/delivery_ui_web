@@ -164,9 +164,9 @@ export default function MyMarketPage() {
       <Card>
         <div className="flex gap-4">
           <div className="w-24 h-24 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0 flex items-center justify-center">
-            {restaurant.imageUrl ? (
+            {restaurant.imageUrls && restaurant.imageUrls[0] ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={restaurant.imageUrl} alt={restaurant.name} className="w-full h-full object-cover" />
+              <img src={restaurant.imageUrls[0]} alt={restaurant.name} className="w-full h-full object-cover" />
             ) : (
               <Store size={28} className="text-gray-300" />
             )}
