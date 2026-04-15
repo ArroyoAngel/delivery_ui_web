@@ -375,7 +375,7 @@ export default function OrdersPage() {
                 {/* Actions */}
                 <div className="flex gap-3">
                   <Button
-                    variant="destructive"
+                    variant="danger"
                     onClick={async () => {
                       if (!rejectReason.trim()) {
                         toast.error('Ingresa una razón');

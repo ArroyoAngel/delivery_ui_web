@@ -61,6 +61,7 @@ export default function TopBar() {
 
   function handleLogout() {
     logout();
+    qc.clear();
     document.cookie = 'auth-token=; path=/; max-age=0';
     toast.success('Sesión cerrada');
     router.replace('/login');

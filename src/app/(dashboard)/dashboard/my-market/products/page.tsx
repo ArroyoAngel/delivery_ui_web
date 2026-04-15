@@ -102,7 +102,7 @@ export default function MyMarketProductsPage() {
       {/* Store info */}
       <Card>
         <div className="flex gap-4 items-center">
-          {restaurant.imageUrls?.[0] ? (
+          {restaurant.imageUrls && restaurant.imageUrls.length > 0 ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={restaurant.imageUrls[0]} alt={restaurant.name} className="w-16 h-16 rounded-xl object-cover" />
           ) : (

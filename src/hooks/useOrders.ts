@@ -3,20 +3,21 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import type { Order, OrderStatus } from '@/models';
+import type { RawOrder, RawOrderItem } from '@/types/api';
 
 function normalizeOrdersResponse(data: unknown): Order[] {
   if (Array.isArray(data)) return data as Order[];
-  if (data && typeof data === 'object' && Array.isArray((data as { orders?: unknown[] }).orders)) {
-    return (data as { orders: unknown[] }).orders.map((o) => normalizeShopOrder(o));
+  if (data && typeof data === 'object' && Array.isArray((data as { orders?: RawOrder[] }).orders)) {
+    return (data as { orders: RawOrder[] }).orders.map((o) => normalizeShopOrder(o));
   }
   return [];
 }
 
-function normalizeShopOrder(raw: unknown): Order {
-  const obj = (raw ?? {}) as Record<string, unknown>;
+function normalizeShopOrder(raw: RawOrder): Order {
+  const obj = raw ?? {};
   const items = Array.isArray(obj.items)
     ? obj.items.map((it, idx) => {
-        const item = it as Record<string, unknown>;
+        const item = it as RawOrderItem;
         const menu_item_id = String(item.menu_item_id ?? item.menuItemId ?? '');
         const item_name = String(item.item_name ?? item.name ?? 'Producto');
         const unit_price = Number(item.unit_price ?? item.unitPrice ?? 0);
@@ -66,9 +67,9 @@ function normalizeShopOrder(raw: unknown): Order {
     notes: typeof obj.notes === 'string' ? obj.notes : undefined,
     items,
     groupId: obj.groupId ? String(obj.groupId) : undefined,
-    paymentProofUrl: obj.paymentProofUrl ?? obj.payment_proof_url ?? null,
+    paymentProofUrl: (obj.paymentProofUrl ?? obj.payment_proof_url) as string | null,
     paymentMethod: String(obj.paymentMethod ?? obj.payment_method ?? 'qr'),
-    paidAt: obj.paidAt ?? obj.paid_at ?? null,
+    paidAt: (obj.paidAt ?? obj.paid_at) as string | null,
     createdAt: String(obj.createdAt ?? new Date().toISOString()),
     updatedAt: String(obj.updatedAt ?? obj.createdAt ?? new Date().toISOString()),
   };

@@ -46,6 +46,7 @@ export function useCreateShop() {
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['shops'] });
+      qc.invalidateQueries({ queryKey: ['my-shop'] });
     },
   });
 }

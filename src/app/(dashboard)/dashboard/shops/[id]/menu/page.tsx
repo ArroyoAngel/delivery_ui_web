@@ -103,9 +103,9 @@ export default function ShopMenuPage() {
       {/* Restaurant info */}
       <Card>
         <div className="flex gap-4 items-center">
-          {restaurant.imageUrl ? (
+          {restaurant.imageUrls && restaurant.imageUrls.length > 0 ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={restaurant.imageUrl} alt={restaurant.name} className="w-16 h-16 rounded-xl object-cover" />
+            <img src={restaurant.imageUrls[0]} alt={restaurant.name} className="w-16 h-16 rounded-xl object-cover" />
           ) : (
             <div className="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center">
               <Package size={24} className="text-gray-300" />

@@ -85,7 +85,7 @@ export default function NewShopPage() {
 
     try {
       const url = await uploadImage.mutateAsync({ shopId: 'temp', file });
-      setImageUrl(url);
+      setImageUrl(url[0]);
       toast.success('Imagen cargada');
     } catch {
       toast.error('Error al subir imagen');
