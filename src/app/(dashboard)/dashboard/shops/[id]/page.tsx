@@ -18,7 +18,8 @@ import {
   Check,
   X,
 } from 'lucide-react';
-import { useShop, useToggleShopOpen, useShopCategories, useAssignShopCategories } from '@/hooks/useShops';
+import { useShop, useToggleShopOpen, useShopCategories, useAssignShopCategories, useBusinessTypes } from '@/hooks/useShops';
+import { useAuthStore } from '@/store/useAuthStore';
 import { type ShopCategory } from '@/models';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
@@ -37,6 +38,8 @@ export default function ShopDetailPage() {
   const toggleOpen = useToggleShopOpen();
   const assignCategories = useAssignShopCategories();
   const { data: allCategories = [] } = useShopCategories();
+  const { data: businessTypes = [] } = useBusinessTypes();
+  const isSuperAdmin = useAuthStore((s) => s.isSuperAdmin());
 
   // Editable fields state
   const [editing, setEditing] = useState(false);
@@ -53,6 +56,7 @@ export default function ShopDetailPage() {
     closingTime: '',
     latitude: '',
     longitude: '',
+    businessTypeId: '',
   });
 
   // Filtrar categorías por tipo de negocio
@@ -74,6 +78,7 @@ export default function ShopDetailPage() {
       closingTime: restaurant.closingTime ?? '',
       latitude: String(restaurant.latitude ?? ''),
       longitude: String(restaurant.longitude ?? ''),
+      businessTypeId: restaurant.businessTypeId ?? '',
     });
     setSelectedCategoryIds([]);
     setEditing(true);
@@ -82,7 +87,7 @@ export default function ShopDetailPage() {
   async function saveEdit() {
     setSaving(true);
     try {
-      await api.patch(`/api/shops/${params.id}`, {
+      const payload: Record<string, unknown> = {
         name: form.name,
         description: form.description,
         address: form.address,
@@ -93,7 +98,14 @@ export default function ShopDetailPage() {
         closingTime: form.closingTime || null,
         latitude: form.latitude ? Number(form.latitude) : undefined,
         longitude: form.longitude ? Number(form.longitude) : undefined,
-      });
+      };
+
+      // Solo superadmin puede cambiar businessTypeId
+      if (isSuperAdmin && form.businessTypeId) {
+        payload.businessTypeId = form.businessTypeId;
+      }
+
+      await api.patch(`/api/shops/${params.id}`, payload);
 
       // Guardar categorías si hay seleccionadas
       if (selectedCategoryIds.length > 0 || availableCategories.length > 0) {
@@ -259,6 +271,23 @@ export default function ShopDetailPage() {
                     onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))}
                   />
                 </div>
+                {isSuperAdmin && (
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">Tipo de negocio</label>
+                    <select
+                      className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      value={form.businessTypeId}
+                      onChange={(e) => setForm((f) => ({ ...f, businessTypeId: e.target.value }))}
+                    >
+                      <option value="">Seleccionar tipo...</option>
+                      {businessTypes.map((bt) => (
+                        <option key={bt.value} value={bt.value}>
+                          {bt.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
                 <div className="sm:col-span-2">
                   <label className="block text-xs font-medium text-gray-500 mb-1">Descripción</label>
                   <input
@@ -377,6 +406,14 @@ export default function ShopDetailPage() {
                 </div>
 
                 <p className="text-sm text-gray-600">{restaurant.description || 'Sin descripción'}</p>
+
+                {restaurant.businessTypeId && (
+                  <p className="text-xs text-gray-500">
+                    <strong>Tipo de negocio:</strong>{' '}
+                    {businessTypes.find((bt) => bt.value === restaurant.businessTypeId)?.label ||
+                      restaurant.businessTypeId}
+                  </p>
+                )}
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
