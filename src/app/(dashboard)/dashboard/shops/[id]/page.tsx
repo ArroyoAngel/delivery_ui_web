@@ -80,7 +80,7 @@ export default function ShopDetailPage() {
       longitude: String(restaurant.longitude ?? ''),
       businessTypeId: restaurant.businessTypeId ?? '',
     });
-    setSelectedCategoryIds([]);
+    setSelectedCategoryIds(restaurant.assignedCategoryIds ?? []);
     setEditing(true);
   }
 

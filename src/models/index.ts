@@ -103,6 +103,7 @@ export interface MenuItem {
 
 export interface ShopDetail extends Shop {
   menuCategories: (MenuCategory & { items: MenuItem[] })[];
+  assignedCategoryIds?: string[];
 }
 
 // ─── Order ────────────────────────────────────────────────────────────────────
