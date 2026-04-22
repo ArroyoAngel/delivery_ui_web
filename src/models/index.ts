@@ -99,6 +99,7 @@ export interface MenuItem {
   dailyLimit?: number | null;
   dailySold?: number;
   createdAt: string;
+  categoryIds?: string[];
 }
 
 export interface ShopDetail extends Shop {

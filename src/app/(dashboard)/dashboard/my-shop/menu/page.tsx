@@ -26,7 +26,6 @@ export default function MyShopMenuPage() {
   const [stockEditing, setStockEditing] = useState<Record<string, StockEdit>>({});
   const [stockSaving, setStockSaving] = useState<Record<string, boolean>>({});
   const [productEditing, setProductEditing] = useState<Record<string, ProductEdit>>({});
-  const [categoriesSaving, setCategoriesSaving] = useState<Record<string, boolean>>({});
 
   // Filtrar categorías por businessTypeId del restaurante
   const availableShopCategories = useMemo(() => {
@@ -35,7 +34,7 @@ export default function MyShopMenuPage() {
   }, [restaurant, allShopCategories]);
 
   function startProductEdit(item: MenuItem) {
-    const categoryIds = (item as any).categoryIds ?? [];
+    const categoryIds = item.categoryIds ?? [];
     const parsedCategoryIds = Array.isArray(categoryIds) ? categoryIds : [];
     setProductEditing((prev) => ({
       ...prev,
