@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   ArrowLeft,
@@ -18,12 +18,10 @@ import {
   Check,
   X,
 } from 'lucide-react';
-import { useShop, useToggleShopOpen, useShopCategories, useAssignShopCategories, useBusinessTypes } from '@/hooks/useShops';
+import { useShop, useToggleShopOpen, useBusinessTypes } from '@/hooks/useShops';
 import { useAuthStore } from '@/store/useAuthStore';
-import { type ShopCategory } from '@/models';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import SelectableChip from '@/components/ui/SelectableChip';
 import ShopLocationPicker from '@/components/ui/ShopLocationPicker';
 import Badge from '@/components/ui/Badge';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
@@ -36,15 +34,12 @@ export default function ShopDetailPage() {
   const router = useRouter();
   const { data: restaurant, isLoading, refetch } = useShop(params.id);
   const toggleOpen = useToggleShopOpen();
-  const assignCategories = useAssignShopCategories();
-  const { data: allCategories = [] } = useShopCategories();
   const { data: businessTypes = [] } = useBusinessTypes();
   const isSuperAdmin = useAuthStore((s) => s.isSuperAdmin());
 
   // Editable fields state
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [form, setForm] = useState({
     name: '',
     description: '',
@@ -58,12 +53,6 @@ export default function ShopDetailPage() {
     longitude: '',
     businessTypeId: '',
   });
-
-  // Filtrar categorías por tipo de negocio
-  const availableCategories = useMemo(
-    () => allCategories.filter((cat: ShopCategory) => cat.businessTypeId === restaurant?.businessTypeId),
-    [allCategories, restaurant?.businessTypeId],
-  );
 
   function startEdit() {
     if (!restaurant) return;
@@ -80,7 +69,6 @@ export default function ShopDetailPage() {
       longitude: String(restaurant.longitude ?? ''),
       businessTypeId: restaurant.businessTypeId ?? '',
     });
-    setSelectedCategoryIds(restaurant.assignedCategoryIds ?? []);
     setEditing(true);
   }
 
@@ -106,19 +94,6 @@ export default function ShopDetailPage() {
       }
 
       await api.patch(`/api/shops/${params.id}`, payload);
-
-      // Guardar categorías si hay seleccionadas
-      if (selectedCategoryIds.length > 0 || availableCategories.length > 0) {
-        try {
-          await assignCategories.mutateAsync({
-            shopId: params.id,
-            categoryIds: selectedCategoryIds,
-          });
-        } catch {
-          toast.error('Se actualizó el negocio pero no se pudieron guardar las categorías');
-        }
-      }
-
       await refetch();
       setEditing(false);
       toast.success('Negocio actualizado');
@@ -355,29 +330,6 @@ export default function ShopDetailPage() {
                     }}
                   />
                 </div>
-                {availableCategories.length > 0 && (
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-medium text-gray-500 mb-2">Categorías</label>
-                    <div className="flex flex-wrap gap-2 p-2 border border-gray-200 rounded-lg bg-gray-50">
-                      {availableCategories.map((cat: ShopCategory) => (
-                        <SelectableChip
-                          key={cat.id}
-                          id={cat.id}
-                          label={cat.name}
-                          icon={cat.icon}
-                          selected={selectedCategoryIds.includes(cat.id)}
-                          onToggle={(id) => {
-                            if (selectedCategoryIds.includes(id)) {
-                              setSelectedCategoryIds(selectedCategoryIds.filter((cid) => cid !== id));
-                            } else {
-                              setSelectedCategoryIds([...selectedCategoryIds, id]);
-                            }
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
             ) : (
               <>

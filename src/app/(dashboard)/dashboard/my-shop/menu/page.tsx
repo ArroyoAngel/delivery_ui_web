@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Plus, ToggleLeft, ToggleRight, Package, Check, X, Pencil } from 'lucide-react';
-import { useMyShop, useUpdateMenuItemAvailability, useUpdateMenuItem } from '@/hooks/useShops';
+import { useMyShop, useUpdateMenuItemAvailability, useUpdateMenuItem, useShopCategories } from '@/hooks/useShops';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
+import SelectableChip from '@/components/ui/SelectableChip';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import { formatCurrency } from '@/lib/utils';
 import type { MenuItem } from '@/models';
@@ -14,18 +15,28 @@ import api from '@/lib/api';
 import toast from 'react-hot-toast';
 
 type StockEdit = { stock: string; dailyLimit: string };
-type ProductEdit = { name: string; description: string; price: string; imageUrl: string };
+type ProductEdit = { name: string; description: string; price: string; imageUrl: string; categoryIds: string[] };
 
 export default function MyShopMenuPage() {
   const router = useRouter();
   const { data: restaurant, isLoading, refetch } = useMyShop();
+  const { data: allShopCategories = [] } = useShopCategories();
   const updateAvailability = useUpdateMenuItemAvailability();
   const updateMenuItem = useUpdateMenuItem();
   const [stockEditing, setStockEditing] = useState<Record<string, StockEdit>>({});
   const [stockSaving, setStockSaving] = useState<Record<string, boolean>>({});
   const [productEditing, setProductEditing] = useState<Record<string, ProductEdit>>({});
+  const [categoriesSaving, setCategoriesSaving] = useState<Record<string, boolean>>({});
+
+  // Filtrar categorías por businessTypeId del restaurante
+  const availableShopCategories = useMemo(() => {
+    if (!restaurant) return [];
+    return allShopCategories.filter((cat) => cat.businessTypeId === restaurant.businessTypeId);
+  }, [restaurant, allShopCategories]);
 
   function startProductEdit(item: MenuItem) {
+    const categoryIds = (item as any).categoryIds ?? [];
+    const parsedCategoryIds = Array.isArray(categoryIds) ? categoryIds : [];
     setProductEditing((prev) => ({
       ...prev,
       [item.id]: {
@@ -33,6 +44,7 @@ export default function MyShopMenuPage() {
         description: item.description ?? '',
         price: String(item.price),
         imageUrl: item.imageUrl ?? '',
+        categoryIds: parsedCategoryIds,
       },
     }));
   }
@@ -61,8 +73,10 @@ export default function MyShopMenuPage() {
         description: edit.description.trim(),
         price,
         imageUrl: edit.imageUrl.trim() || undefined,
+        categoryIds: edit.categoryIds,
       });
       cancelProductEdit(item.id);
+      await refetch();
       toast.success('Producto actualizado');
     } catch {
       toast.error('Error al guardar producto');
@@ -346,6 +360,33 @@ export default function MyShopMenuPage() {
                               placeholder="https://..."
                               onChange={(e) => setProductEditing((prev) => ({ ...prev, [item.id]: { ...prev[item.id], imageUrl: e.target.value } }))}
                             />
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 block mb-2">Categorías del producto (shop)</label>
+                            <div className="flex flex-wrap gap-2">
+                              {availableShopCategories.length > 0 ? (
+                                availableShopCategories.map((cat) => (
+                                  <SelectableChip
+                                    key={cat.id}
+                                    id={cat.id}
+                                    label={cat.name}
+                                    icon={cat.icon}
+                                    selected={pe.categoryIds.includes(cat.id)}
+                                    onToggle={(id) => {
+                                      const newIds = pe.categoryIds.includes(id)
+                                        ? pe.categoryIds.filter((cid) => cid !== id)
+                                        : [...pe.categoryIds, id];
+                                      setProductEditing((prev) => ({
+                                        ...prev,
+                                        [item.id]: { ...prev[item.id], categoryIds: newIds },
+                                      }));
+                                    }}
+                                  />
+                                ))
+                              ) : (
+                                <p className="text-gray-400 text-xs py-2">No hay categorías disponibles para este tipo de negocio</p>
+                              )}
+                            </div>
                           </div>
                           <div className="flex justify-end gap-1 pt-1">
                             <button

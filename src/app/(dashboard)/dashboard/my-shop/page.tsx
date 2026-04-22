@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useMemo } from 'react';
+import { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Star,
@@ -21,11 +21,10 @@ import {
   Plus,
   Trash2,
 } from 'lucide-react';
-import { useMyShop, useToggleShopOpen, useUploadShopQr, useShopCategories, useAssignShopCategories, useUploadShopImage, useRemoveShopImage, useBusinessTypes, type BusinessType } from '@/hooks/useShops';
-import { type ShopCategory, type MenuCategory, type MenuItem } from '@/models';
+import { useMyShop, useToggleShopOpen, useUploadShopQr, useUploadShopImage, useRemoveShopImage, useBusinessTypes, type BusinessType } from '@/hooks/useShops';
+import { type MenuCategory, type MenuItem } from '@/models';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
-import SelectableChip from '@/components/ui/SelectableChip';
 import Badge from '@/components/ui/Badge';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 import { formatCurrency } from '@/lib/utils';
@@ -38,8 +37,6 @@ export default function MyShopPage() {
   const { data: businessTypes = [] } = useBusinessTypes();
   const toggleOpen = useToggleShopOpen();
   const uploadQr = useUploadShopQr();
-  const assignCategories = useAssignShopCategories();
-  const { data: allCategories = [] } = useShopCategories();
   const uploadImage = useUploadShopImage();
   const removeImage = useRemoveShopImage();
   const qrInputRef = useRef<HTMLInputElement>(null);
@@ -47,7 +44,6 @@ export default function MyShopPage() {
 
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [editingImages, setEditingImages] = useState<string[]>([]);
   const [newImageFiles, setNewImageFiles] = useState<File[]>([]);
   const [form, setForm] = useState({
@@ -60,12 +56,6 @@ export default function MyShopPage() {
     openingTime: '',
     closingTime: '',
   });
-
-  // Filtrar categorías por tipo de negocio
-  const availableCategories = useMemo(
-    () => allCategories.filter((cat: ShopCategory) => cat.businessTypeId === restaurant?.businessTypeId),
-    [allCategories, restaurant?.businessTypeId],
-  );
 
   async function handleQrFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -130,7 +120,6 @@ export default function MyShopPage() {
       openingTime: restaurant.openingTime ?? '',
       closingTime: restaurant.closingTime ?? '',
     });
-    setSelectedCategoryIds([]);
     setEditingImages([]);
     setNewImageFiles([]);
     setEditing(true);
@@ -162,18 +151,6 @@ export default function MyShopPage() {
           }
         } catch {
           toast.error('Se actualizó el negocio pero no se pudieron guardar todas las imágenes');
-        }
-      }
-
-      // Guardar categorías si hay seleccionadas
-      if (selectedCategoryIds.length > 0 || availableCategories.length > 0) {
-        try {
-          await assignCategories.mutateAsync({
-            shopId: restaurant!.id,
-            categoryIds: selectedCategoryIds,
-          });
-        } catch {
-          toast.error('Se actualizó el negocio pero no se pudieron guardar las categorías');
         }
       }
 
@@ -379,29 +356,6 @@ export default function MyShopPage() {
                     onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
                   />
                 </div>
-                {availableCategories.length > 0 && (
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-medium text-gray-500 mb-2">Categorías</label>
-                    <div className="flex flex-wrap gap-2 p-2 border border-gray-200 rounded-lg bg-gray-50">
-                      {availableCategories.map((cat: ShopCategory) => (
-                        <SelectableChip
-                          key={cat.id}
-                          id={cat.id}
-                          label={cat.name}
-                          icon={cat.icon}
-                          selected={selectedCategoryIds.includes(cat.id)}
-                          onToggle={(id) => {
-                            if (selectedCategoryIds.includes(id)) {
-                              setSelectedCategoryIds(selectedCategoryIds.filter((cid) => cid !== id));
-                            } else {
-                              setSelectedCategoryIds([...selectedCategoryIds, id]);
-                            }
-                          }}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
                 <div>
                   <label className="block text-xs font-medium text-gray-500 mb-1">Fee de delivery (Bs)</label>
                   <input

@@ -1,15 +1,17 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMyShop, useCreateMenuItem, useCreateMenuCategory, useUploadMenuItemImage } from '@/hooks/useShops';
+import { useMyShop, useCreateMenuItem, useCreateMenuCategory, useUploadMenuItemImage, useShopCategories } from '@/hooks/useShops';
 import { ArrowLeft, Plus, Loader2, ImageIcon, Upload, X } from 'lucide-react';
+import SelectableChip from '@/components/ui/SelectableChip';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 
 export default function MyShopNewMenuItemPage() {
   const router = useRouter();
   const { data: restaurant } = useMyShop();
+  const { data: allShopCategories = [] } = useShopCategories();
   const createItem = useCreateMenuItem();
   const createCategory = useCreateMenuCategory();
   const uploadImage = useUploadMenuItemImage();
@@ -25,6 +27,7 @@ export default function MyShopNewMenuItemPage() {
     stock: '',
     dailyLimit: '',
     isAvailable: true,
+    categoryIds: [] as string[],
   });
 
   const [newCategoryName, setNewCategoryName] = useState('');
@@ -32,6 +35,12 @@ export default function MyShopNewMenuItemPage() {
   const [creatingCategory, setCreatingCategory] = useState(false);
 
   const categories = restaurant?.menuCategories ?? [];
+
+  // Filtrar categorías de shop por businessTypeId
+  const availableShopCategories = useMemo(() => {
+    if (!restaurant) return [];
+    return allShopCategories.filter((cat) => cat.businessTypeId === restaurant.businessTypeId);
+  }, [restaurant, allShopCategories]);
 
   async function handleAddCategory() {
     if (!newCategoryName.trim() || !restaurant) return;
@@ -68,6 +77,7 @@ export default function MyShopNewMenuItemPage() {
         stock: form.stock !== '' ? parseInt(form.stock) : null,
         dailyLimit: form.dailyLimit !== '' ? parseInt(form.dailyLimit) : null,
         isAvailable: form.isAvailable,
+        categoryIds: form.categoryIds,
       });
       toast.success('Producto registrado');
       router.push('/dashboard/my-shop/menu');
@@ -279,6 +289,32 @@ export default function MyShopNewMenuItemPage() {
               <X size={12} /> Quitar imagen
             </button>
           )}
+        </div>
+
+        {/* Categorías del producto (shop) */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Categorías del producto (shop)</label>
+          <div className="flex flex-wrap gap-2">
+            {availableShopCategories.length > 0 ? (
+              availableShopCategories.map((cat) => (
+                <SelectableChip
+                  key={cat.id}
+                  id={cat.id}
+                  label={cat.name}
+                  icon={cat.icon}
+                  selected={form.categoryIds.includes(cat.id)}
+                  onToggle={(id) => {
+                    const newIds = form.categoryIds.includes(id)
+                      ? form.categoryIds.filter((cid) => cid !== id)
+                      : [...form.categoryIds, id];
+                    setForm((prev) => ({ ...prev, categoryIds: newIds }));
+                  }}
+                />
+              ))
+            ) : (
+              <p className="text-gray-400 text-sm">No hay categorías disponibles para este tipo de negocio</p>
+            )}
+          </div>
         </div>
 
         {/* Disponible */}

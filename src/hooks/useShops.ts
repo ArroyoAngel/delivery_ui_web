@@ -174,6 +174,7 @@ export function useUpdateMenuItem() {
       description?: string;
       price?: number;
       imageUrl?: string;
+      categoryIds?: string[];
     }) => {
       const { data } = await api.patch(`/api/shops/${shopId}/menu/${itemId}`, dto);
       return data;
@@ -347,6 +348,7 @@ export function useCreateMenuItem() {
       stock?: number | null;
       dailyLimit?: number | null;
       size?: number;
+      categoryIds?: string[];
     }) => {
       const { data } = await api.post(`/api/shops/${shopId}/menu`, body);
       return data;
