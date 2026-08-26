@@ -2,7 +2,7 @@
 
 import { useAuthStore } from '@/store/useAuthStore';
 import SuperAdminDashboard from '@/components/dashboard/SuperAdminDashboard';
-import RestaurantDashboard from '@/components/dashboard/RestaurantDashboard';
+import ShopDashboard from '@/components/dashboard/ShopDashboard';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
 
 export default function DashboardPage() {
@@ -10,5 +10,5 @@ export default function DashboardPage() {
   if (!user) return <PageLoader />;
 
   const isSuperAdmin = user.roles.includes('superadmin');
-  return isSuperAdmin ? <SuperAdminDashboard /> : <RestaurantDashboard />;
+  return isSuperAdmin ? <SuperAdminDashboard /> : <ShopDashboard />;
 }

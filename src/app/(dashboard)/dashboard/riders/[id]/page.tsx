@@ -435,7 +435,7 @@ export default function RiderDetailPage() {
                   <Package size={13} className="text-green-600" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">{d.restaurantName}</p>
+                  <p className="text-sm font-medium text-gray-800 truncate">{d.shopName}</p>
                   <p className="text-xs text-gray-400 truncate">{d.deliveryAddress}</p>
                   <p className="text-xs text-gray-300">{new Date(d.deliveredAt).toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit' })}</p>
                 </div>

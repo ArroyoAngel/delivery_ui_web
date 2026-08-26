@@ -1,6 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 
 export interface FinanceSummary {
@@ -17,6 +17,13 @@ export interface FinanceSummary {
     total_withdrawals: number;
     pending_withdrawals: number;
     pending_withdrawals_amount: string;
+    paid_out_amount: string;
+  };
+  platform: {
+    total_earned: string;
+    commission_earned: string;
+    fee_earned: string;
+    pending_rider_payout: string;
   };
 }
 
@@ -39,7 +46,7 @@ export interface AdminPaymentRow {
 }
 
 export interface BankAccountRow {
-  owner_type: 'restaurant' | 'rider';
+  owner_type: 'shop' | 'rider';
   id: string;
   owner_id: string;
   owner_name: string | null;
@@ -55,14 +62,14 @@ export interface BankAccountRow {
 
 export interface WithdrawalRow {
   id: string;
-  owner_type: 'restaurant' | 'rider';
+  owner_type: 'shop' | 'rider';
   status: string;
   amount: string;
   external_transfer_id: string | null;
   notes: string | null;
   requested_at: string;
   processed_at: string | null;
-  restaurant_id: string | null;
+  shop_id: string | null;
   rider_id: string | null;
   owner_name: string | null;
   bank_name: string | null;
@@ -118,17 +125,18 @@ export function useWithdrawals(limit = 100) {
 }
 
 export interface MyIncomeSummary {
-  restaurantId: string | null;
+  shopId: string | null;
   total_orders: number;
   gross_sales: string;
   net_income: string;
+  available_balance: string;
   pending_withdrawals_amount: string;
 }
 
 export interface MyBankAccountRow {
   id: string;
-  restaurant_id: string;
-  restaurant_name: string | null;
+  shop_id: string;
+  shop_name: string | null;
   bank_name: string;
   account_holder: string;
   account_number: string;
@@ -186,50 +194,85 @@ export function useMyWithdrawals(limit = 100) {
   });
 }
 
-// ── SA: per-restaurant hooks ──────────────────────────────────────────────────
+// ── SA: per-shop hooks ──────────────────────────────────────────────────
 
-export interface RestaurantIncomeSummary {
-  restaurantId: string;
+export interface ShopIncomeSummary {
+  shopId: string;
   total_orders: number;
   gross_sales: string;
   net_income: string;
+  available_balance: string;
   pending_withdrawals_amount: string;
 }
 
-export function useRestaurantIncomeSummary(restaurantId: string) {
-  return useQuery<RestaurantIncomeSummary>({
-    queryKey: ['finance-restaurant-income', restaurantId],
+export function useShopIncomeSummary(shopId: string) {
+  return useQuery<ShopIncomeSummary>({
+    queryKey: ['finance-shop-income', shopId],
     queryFn: async () => {
-      const { data } = await api.get(`/api/payments/admin/restaurant/${restaurantId}/income`);
+      const { data } = await api.get(`/api/payments/admin/shop/${shopId}/income`);
       return data;
     },
-    enabled: !!restaurantId,
+    enabled: !!shopId,
     staleTime: 30_000,
   });
 }
 
-export function useRestaurantBankAccounts(restaurantId: string) {
+export function useShopBankAccounts(shopId: string) {
   return useQuery<MyBankAccountRow[]>({
-    queryKey: ['finance-restaurant-bank-accounts', restaurantId],
+    queryKey: ['finance-shop-bank-accounts', shopId],
     queryFn: async () => {
-      const { data } = await api.get(`/api/payments/admin/restaurant/${restaurantId}/bank-accounts`);
+      const { data } = await api.get(`/api/payments/admin/shop/${shopId}/bank-accounts`);
       return Array.isArray(data) ? data : [];
     },
-    enabled: !!restaurantId,
+    enabled: !!shopId,
     staleTime: 30_000,
   });
 }
 
-export function useRestaurantWithdrawals(restaurantId: string, limit = 100) {
+export function useShopWithdrawals(shopId: string, limit = 100) {
   return useQuery<MyWithdrawalRow[]>({
-    queryKey: ['finance-restaurant-withdrawals', restaurantId, limit],
+    queryKey: ['finance-shop-withdrawals', shopId, limit],
     queryFn: async () => {
-      const { data } = await api.get(`/api/payments/admin/restaurant/${restaurantId}/withdrawals`, {
+      const { data } = await api.get(`/api/payments/admin/shop/${shopId}/withdrawals`, {
         params: { limit },
       });
       return Array.isArray(data) ? data : [];
     },
-    enabled: !!restaurantId,
+    enabled: !!shopId,
     staleTime: 30_000,
+  });
+}
+
+export function useProcessWithdrawal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: {
+      id: string;
+      action: 'completed' | 'rejected';
+      externalTransferId?: string;
+      notes?: string;
+    }) => {
+      const { id, ...body } = payload;
+      const { data } = await api.put(`/api/payments/admin/withdrawals/${id}/process`, body);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['finance-withdrawals'] });
+      qc.invalidateQueries({ queryKey: ['finance-summary'] });
+    },
+  });
+}
+
+export function useRequestWithdrawal() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (payload: { amount: number; bankAccountId: string }) => {
+      const { data } = await api.post('/api/payments/my/withdrawal', payload);
+      return data;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['finance-my-income'] });
+      qc.invalidateQueries({ queryKey: ['finance-my-withdrawals'] });
+    },
   });
 }

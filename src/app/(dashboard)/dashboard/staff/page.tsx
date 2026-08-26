@@ -14,23 +14,22 @@ import {
   Users,
 } from 'lucide-react';
 import {
-  useMyRestaurant,
-  useRestaurantStaff,
+  useMyShop,
+  useShopStaff,
   useCreateStaff,
   useUpdateStaffPermissions,
   useRemoveStaff,
-} from '@/hooks/useRestaurants';
+} from '@/hooks/useShops';
 import {
   STAFF_PERMISSIONS,
   STAFF_PERMISSION_LABELS,
   RESERVED_ROLE_NAMES,
   type StaffPermission,
-  type RestaurantStaff,
+  type ShopStaff,
 } from '@/models';
 import { Card } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import { PageLoader } from '@/components/ui/LoadingSpinner';
-import { formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
 // ── Formulario de nuevo staff ─────────────────────────────────────────────────
@@ -46,10 +45,10 @@ const EMPTY_FORM = {
 };
 
 function CreateStaffModal({
-  restaurantId,
+  shopId,
   onClose,
 }: {
-  restaurantId: string;
+  shopId: string;
   onClose: () => void;
 }) {
   const [form, setForm] = useState(EMPTY_FORM);
@@ -77,7 +76,7 @@ function CreateStaffModal({
     }
     setSaving(true);
     try {
-      await createStaff.mutateAsync({ restaurantId, ...form });
+      await createStaff.mutateAsync({ shopId, ...form });
       toast.success('Personal registrado exitosamente');
       onClose();
     } catch (err: unknown) {
@@ -153,7 +152,7 @@ function CreateStaffModal({
               className={inputCls}
               value={form.email}
               onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-              placeholder="staff@restaurante.com"
+              placeholder="staff@negocio.com"
             />
           </div>
 
@@ -222,10 +221,10 @@ function CreateStaffModal({
 
 function StaffRow({
   member,
-  restaurantId,
+  shopId,
 }: {
-  member: RestaurantStaff;
-  restaurantId: string;
+  member: ShopStaff;
+  shopId: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [editingPerms, setEditingPerms] = useState<StaffPermission[]>(member.permissions);
@@ -236,7 +235,7 @@ function StaffRow({
   async function handleSavePermissions() {
     setSaving(true);
     try {
-      await updatePerms.mutateAsync({ restaurantId, staffId: member.id, permissions: editingPerms });
+      await updatePerms.mutateAsync({ shopId, staffId: member.id, permissions: editingPerms });
       toast.success('Permisos actualizados');
       setExpanded(false);
     } catch (err: unknown) {
@@ -252,7 +251,7 @@ function StaffRow({
   async function handleRemove() {
     if (!confirm(`¿Remover a ${member.firstName} ${member.lastName} del personal?`)) return;
     try {
-      await removeStaff.mutateAsync({ restaurantId, staffId: member.id });
+      await removeStaff.mutateAsync({ shopId, staffId: member.id });
       toast.success('Personal removido');
     } catch {
       toast.error('Error al remover personal');
@@ -378,8 +377,8 @@ function StaffRow({
 
 // ── Contenido de la página ────────────────────────────────────────────────────
 
-function StaffContent({ restaurantId }: { restaurantId: string }) {
-  const { data: staff, isLoading } = useRestaurantStaff(restaurantId);
+function StaffContent({ shopId }: { shopId: string }) {
+  const { data: staff, isLoading } = useShopStaff(shopId);
   const [showCreate, setShowCreate] = useState(false);
 
   return (
@@ -387,7 +386,7 @@ function StaffContent({ restaurantId }: { restaurantId: string }) {
       {/* Header */}
       <div className="flex items-center gap-3">
         <div className="flex-1">
-          <h2 className="font-semibold text-gray-900">Personal del restaurante</h2>
+          <h2 className="font-semibold text-gray-900">Personal del negocio</h2>
           <p className="text-xs text-gray-400 mt-0.5">
             Creá cuentas para tu equipo y asignales permisos específicos.
           </p>
@@ -416,7 +415,7 @@ function StaffContent({ restaurantId }: { restaurantId: string }) {
             <ShieldCheck size={32} className="mx-auto mb-3 opacity-30" />
             <p className="text-sm font-medium text-gray-500">Sin personal registrado</p>
             <p className="text-xs mt-1">
-              Agregá miembros de tu equipo para que puedan gestionar el restaurante.
+              Agregá miembros de tu equipo para que puedan gestionar el negocio.
             </p>
             <Button
               variant="primary"
@@ -432,13 +431,13 @@ function StaffContent({ restaurantId }: { restaurantId: string }) {
       ) : (
         <div className="space-y-3">
           {staff.map((member) => (
-            <StaffRow key={member.id} member={member} restaurantId={restaurantId} />
+            <StaffRow key={member.id} member={member} shopId={shopId} />
           ))}
         </div>
       )}
 
       {showCreate && (
-        <CreateStaffModal restaurantId={restaurantId} onClose={() => setShowCreate(false)} />
+        <CreateStaffModal shopId={shopId} onClose={() => setShowCreate(false)} />
       )}
     </div>
   );
@@ -447,7 +446,7 @@ function StaffContent({ restaurantId }: { restaurantId: string }) {
 // ── Página principal ──────────────────────────────────────────────────────────
 
 export default function StaffPage() {
-  const { data: restaurant, isLoading, isError } = useMyRestaurant();
+  const { data: restaurant, isLoading, isError } = useMyShop();
 
   if (isLoading) return <PageLoader />;
 
@@ -455,11 +454,11 @@ export default function StaffPage() {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-gray-400">
         <Users size={40} className="mb-4 opacity-30" />
-        <p className="text-sm">No tenés un restaurante asignado.</p>
+        <p className="text-sm">No tenés un negocio asignado.</p>
         <p className="text-xs mt-1">Contactá a un administrador.</p>
       </div>
     );
   }
 
-  return <StaffContent restaurantId={restaurant.id} />;
+  return <StaffContent shopId={restaurant.id} />;
 }

@@ -40,6 +40,7 @@ export function useDeliveryGroups() {
 
 export interface RiderInfo {
   id: string;
+  accountId: string;
   firstName: string;
   lastName: string;
   phone: string;
@@ -50,14 +51,25 @@ export interface RiderInfo {
   lat: number | null;
   lng: number | null;
   createdAt: string;
+  creditBalance?: number;
+  licenseFrontUrl: string | null;
+  licenseBackUrl: string | null;
+  plate: string | null;
+  policyUrl: string | null;
+  vin: string | null;
 }
 
 export function useRidersList() {
   return useQuery<RiderInfo[]>({
     queryKey: ['riders-list'],
     queryFn: async () => {
-      const { data } = await api.get('/api/rider/list');
-      return data;
+      const [{ data: riders }, { data: balances }] = await Promise.all([
+        api.get('/api/rider/list'),
+        api.get('/api/credits/admin/rider-balances').catch(() => ({ data: [] })),
+      ]);
+      const balanceMap: Record<string, number> = {};
+      for (const b of balances) balanceMap[b.rider_id] = Number(b.balance);
+      return riders.map((r: RiderInfo) => ({ ...r, creditBalance: balanceMap[r.id] ?? 0 }));
     },
     refetchInterval: 30_000,
   });
@@ -72,7 +84,7 @@ export interface LocationSegment {
 
 export interface RiderDelivery {
   id: string;
-  restaurantName: string;
+  shopName: string;
   deliveryAddress: string;
   deliveryLat: number;
   deliveryLng: number;

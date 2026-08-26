@@ -11,15 +11,18 @@ import {
   Settings,
   LogOut,
   ChevronRight,
-  UtensilsCrossed,
   ReceiptText,
   ShieldCheck,
   Wallet,
   Landmark,
   HandCoins,
+  MapPin,
+  Tag,
+  Coins,
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useFrontendAccess } from '@/hooks/useAuth';
+import { useMyShop } from '@/hooks/useShops';
 import { useSidebar } from './SidebarContext';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -30,6 +33,8 @@ interface NavItem {
   icon: React.ReactNode;
   /** Función personalizada para detectar el estado activo */
   matchFn?: (pathname: string) => boolean;
+  /** Mostrar solo cuando el negocio es market, solo restaurante, o siempre (undefined) */
+  showWhen?: 'market' | 'restaurant';
 }
 
 const NAV_ITEMS: NavItem[] = [
@@ -39,21 +44,37 @@ const NAV_ITEMS: NavItem[] = [
     icon: <LayoutDashboard size={18} />,
   },
   {
-    label: 'Pedidos',
+    label: 'ORDERS_LABEL',
     href: '/dashboard/orders',
     icon: <ShoppingBag size={18} />,
   },
   {
-    label: 'Mi Restaurante',
-    href: '/dashboard/my-restaurant',
-    icon: <UtensilsCrossed size={18} />,
-    matchFn: (p) => p.startsWith('/dashboard/my-restaurant') && !p.startsWith('/dashboard/my-restaurant/services'),
+    label: 'Mi Negocio',
+    href: '/dashboard/my-shop',
+    icon: <Store size={18} />,
+    matchFn: (p) => p.startsWith('/dashboard/my-shop') && !p.startsWith('/dashboard/my-shop/services'),
+    showWhen: 'restaurant',
   },
   {
     label: 'Servicios',
-    href: '/dashboard/my-restaurant/services',
+    href: '/dashboard/my-shop/services',
     icon: <ReceiptText size={18} />,
-    matchFn: (p) => p.startsWith('/dashboard/my-restaurant/services'),
+    matchFn: (p) => p.startsWith('/dashboard/my-shop/services'),
+    showWhen: 'restaurant',
+  },
+  {
+    label: 'Mi Negocio',
+    href: '/dashboard/my-market',
+    icon: <Store size={18} />,
+    matchFn: (p) => p.startsWith('/dashboard/my-market') && !p.startsWith('/dashboard/my-market/services'),
+    showWhen: 'market',
+  },
+  {
+    label: 'Ventas',
+    href: '/dashboard/my-market/services',
+    icon: <ReceiptText size={18} />,
+    matchFn: (p) => p.startsWith('/dashboard/my-market/services'),
+    showWhen: 'market',
   },
   {
     label: 'Mi Personal',
@@ -62,8 +83,8 @@ const NAV_ITEMS: NavItem[] = [
     matchFn: (p) => p === '/dashboard/staff',
   },
   {
-    label: 'Restaurantes',
-    href: '/dashboard/restaurants',
+    label: 'Negocios',
+    href: '/dashboard/shops',
     icon: <Store size={18} />,
   },
   {
@@ -106,6 +127,21 @@ const NAV_ITEMS: NavItem[] = [
     href: '/dashboard/withdrawals',
     icon: <HandCoins size={18} />,
   },
+  {
+    label: 'Zonas',
+    href: '/dashboard/zones',
+    icon: <MapPin size={18} />,
+  },
+  {
+    label: 'Cupones',
+    href: '/dashboard/coupons',
+    icon: <Tag size={18} />,
+  },
+  {
+    label: 'Créditos',
+    href: '/dashboard/credits',
+    icon: <Coins size={18} />,
+  },
 ];
 
 export default function Sidebar() {
@@ -114,6 +150,8 @@ export default function Sidebar() {
   const { user, logout } = useAuthStore();
   const { isOpen, close } = useSidebar();
   const { data: allowedRoutes = [], isLoading: loadingAccess } = useFrontendAccess();
+  const { data: myStore } = useMyShop();
+  const isMarket = myStore?.serviceCategory === 'market';
 
   function handleLogout() {
     logout();
@@ -124,7 +162,11 @@ export default function Sidebar() {
   const visibleItems = loadingAccess
     ? []
     : NAV_ITEMS.filter((item) => {
-      return allowedRoutes.includes(item.href);
+      if (!allowedRoutes.includes(item.href)) return false;
+      if (item.showWhen && !myStore) return false;          // sin negocio → ocultar
+      if (item.showWhen === 'market' && !isMarket) return false;
+      if (item.showWhen === 'restaurant' && isMarket) return false;
+      return true;
     });
 
   const roleLabel = user?.roles.includes('superadmin')
@@ -168,6 +210,10 @@ export default function Sidebar() {
             ? pathname === '/dashboard'
             : pathname.startsWith(item.href);
 
+          const label = item.label === 'ORDERS_LABEL'
+            ? (isMarket ? 'Ventas' : 'Pedidos')
+            : item.label;
+
           return (
             <Link
               key={item.href}
@@ -182,7 +228,7 @@ export default function Sidebar() {
               style={isActive ? { backgroundColor: '#f97316' } : {}}
             >
               <span className="flex-shrink-0">{item.icon}</span>
-              <span className="flex-1">{item.label}</span>
+              <span className="flex-1">{label}</span>
               {isActive && <ChevronRight size={14} />}
             </Link>
           );
@@ -191,17 +237,35 @@ export default function Sidebar() {
 
       {/* User footer */}
       <div className="border-t border-white/10 p-3">
-        <div className="flex items-center gap-3 px-2 py-2 rounded-lg mb-1">
-          <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-            {user ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() || '??' : '??'}
+        {allowedRoutes.includes('/dashboard/profile') ? (
+          <Link
+            href="/dashboard/profile"
+            onClick={close}
+            className="flex items-center gap-3 px-2 py-2 rounded-lg mb-1 hover:bg-white/5 transition-all"
+          >
+            <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {user ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() || '??' : '??'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-xs font-medium truncate">
+                {user ? `${user.firstName} ${user.lastName}` : '—'}
+              </p>
+              <p className="text-gray-500 text-xs truncate">{roleLabel}</p>
+            </div>
+          </Link>
+        ) : (
+          <div className="flex items-center gap-3 px-2 py-2 rounded-lg mb-1">
+            <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
+              {user ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase() || '??' : '??'}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-white text-xs font-medium truncate">
+                {user ? `${user.firstName} ${user.lastName}` : '—'}
+              </p>
+              <p className="text-gray-500 text-xs truncate">{roleLabel}</p>
+            </div>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white text-xs font-medium truncate">
-              {user ? `${user.firstName} ${user.lastName}` : '—'}
-            </p>
-            <p className="text-gray-500 text-xs truncate">{roleLabel}</p>
-          </div>
-        </div>
+        )}
         <button
           onClick={handleLogout}
           className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-400/10 text-sm transition-all"

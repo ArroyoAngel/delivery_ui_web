@@ -6,14 +6,18 @@
     "dev": "next dev -p 8080",
     "build": "next build",
     "start": "next start -p 8080",
-    "lint": "eslint"
+    "lint": "eslint",
+    "kill:port": "powershell -Command \"$p=(Get-NetTCPConnection -LocalPort 8080 -State Listen -EA SilentlyContinue | Select-Object -First 1).OwningProcess; if($p){Stop-Process -Id $p -Force}\""
   },
   "dependencies": {
     "@tanstack/react-query": "^5.90.21",
     "axios": "^1.13.6",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "dom-to-image-more": "^3.7.2",
     "firebase": "^12.10.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
     "lucide-react": "^0.577.0",
     "mapbox-gl": "^3.19.1",
     "next": "16.1.6",
@@ -21,6 +25,7 @@
     "react-dom": "19.2.3",
     "react-hot-toast": "^2.6.0",
     "recharts": "^3.8.0",
+    "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.5.0",
     "zustand": "^5.0.11"
   },

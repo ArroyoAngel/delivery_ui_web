@@ -23,14 +23,20 @@ api.interceptors.request.use((config) => {
       }
     }
   }
+  // Si el body es FormData, dejar que el navegador establezca el Content-Type
+  // con el boundary correcto (multipart/form-data; boundary=...)
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type'];
+  }
   return config;
 });
 
-// Redirect to /login on 401
+// Redirect to /login on 401 — except on the login endpoint itself
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && typeof window !== 'undefined') {
+    const isLoginRequest = error.config?.url?.includes('/auth/login');
+    if (error.response?.status === 401 && !isLoginRequest && typeof window !== 'undefined') {
       localStorage.removeItem('auth-storage');
       window.location.href = '/login';
     }
